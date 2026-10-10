@@ -8,11 +8,36 @@ export interface SkillSubcomponent {
 
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced';
 
+export interface BaselineOption {
+  level: SkillLevel;
+  title: string;
+  badge: string;
+  definition: string;
+  realWorldScenario: string;
+  focusArea: string;
+}
+
+export interface CourseModule {
+  id: string;
+  disciplineId: string;
+  order: number;
+  title: string;
+  subtitle: string;
+  estimatedMinutes: number;
+  status: 'completed' | 'in_progress' | 'locked';
+  microFocus: string;
+  prescribedDrill: string;
+  keyObjectives: string[];
+  beginnerSteps?: string[];
+}
+
 export interface Discipline {
   id: string;
   name: string;
+  shortName: string;
   category: string;
   iconName: string;
+  tagline: string;
   description: string;
   coachPersona: {
     name: string;
@@ -22,14 +47,16 @@ export interface Discipline {
   };
   microFocus: string;
   prescribedDrill: string;
-  beginnerStepByStepPrep: string[]; // Step by step setup explanation for beginners
+  beginnerStepByStepPrep: string[];
   overallScore: number;
   subcomponents: SkillSubcomponent[];
   systemInstruction: string;
+  baselineOptions?: BaselineOption[];
+  modules?: CourseModule[];
 }
 
 export interface KeyframeNote {
-  timeOffsetSeconds: number; // e.g. 1.2s
+  timeOffsetSeconds: number;
   label: string;
   description: string;
   type: 'good' | 'warning' | 'alert';
@@ -41,9 +68,9 @@ export interface VideoClip {
   disciplineId: string;
   createdAt: string; // ISO date
   durationSeconds: number;
-  videoUrl: string; // blob URL or sample video URL
+  videoUrl: string;
   thumbnailUrl: string;
-  fpsCaptured: number; // e.g. 30 FPS
+  fpsCaptured: number;
   isMilestone: boolean;
   sizeMB: number;
   tags: string[];
@@ -58,23 +85,45 @@ export interface SessionReport {
   timestamp: string;
   durationMinutes: number;
   overallScore: number;
-  scoreChange: number; // e.g. +0.4
+  scoreChange: number;
   coachSummary: string;
   keyTakeaways: string[];
   modelRepClip: VideoClip;
   adjustmentRepClip: VideoClip;
   highFpsBurstsCaptured: number;
+  moduleId?: string;
+}
+
+export interface PracticeSchedule {
+  daysPerWeek: number;
+  minutesPerDay: number;
+  totalWeeklyMinutes: number;
+}
+
+export interface EnrolledSkillProgress {
+  disciplineId: string;
+  skillLevel: SkillLevel;
+  primaryGoal: string;
+  schedule?: PracticeSchedule;
+  completedModuleIds: string[];
+  currentModuleId: string;
+  progressPercent: number; // 0-100
+  lastPracticedDate?: string;
+  hoursSpent: number;
 }
 
 export interface CoachProfile {
   studentName: string;
-  skillLevel: SkillLevel; // Default: 'beginner'
+  skillLevel: SkillLevel;
   totalHoursLogged: number;
   targetHours: number; // 10000
   memberSince: string;
   activeDisciplineId: string;
-  airPodsConnected: boolean;
-  batteryLevel: number;
+  enrolledDisciplineIds?: string[];
+  skillsProgress?: Record<string, EnrolledSkillProgress>;
+  schedule?: PracticeSchedule;
+  audioGuidanceEnabled: boolean;
+  batteryLevel?: number;
   hasCompletedOnboarding: boolean;
   coachNotesLog: {
     id: string;
