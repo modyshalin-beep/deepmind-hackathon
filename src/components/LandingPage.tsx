@@ -38,10 +38,10 @@ export function LandingPage({ disciplines, onStartOnboarding, onExploreDemo }: L
       <header className="border-b border-[#E8E2D8] px-6 py-4 bg-[#FAF9F6]/90 backdrop-blur-xl">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#E8A5A5] via-[#A4C2F4] to-[#E9D78E] flex items-center justify-center font-black text-[#3E4348] text-base shadow-xs">
-              P
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#E8A5A5] via-[#A4C2F4] to-[#E9D78E] flex items-center justify-center font-black text-[#3E4348] text-xs shadow-xs">
+              10K
             </div>
-            <span className="font-black text-base tracking-tight text-[#3E4348]">POCKET COACH</span>
+            <span className="font-black text-base tracking-tight text-[#3E4348]">TenK</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -86,7 +86,7 @@ export function LandingPage({ disciplines, onStartOnboarding, onExploreDemo }: L
           </h1>
 
           <p className="text-sm sm:text-base text-[#6E757C] leading-relaxed max-w-xl mx-auto">
-            Prop your phone and practice peacefully. Pocket Coach watches your movement via camera and guides you with warm, supportive voice cues in real time.
+            Prop your phone and practice peacefully. TenK watches your movement via camera and guides you with warm, supportive voice cues in real time.
           </p>
 
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">

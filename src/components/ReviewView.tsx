@@ -30,7 +30,7 @@ export function ReviewView({
 
   const handleShare = async (clip: VideoClip) => {
     await shareVideoOrCard({
-      title: `${clip.title} - Pocket Coach AI`,
+      title: `${clip.title} - TenK AI`,
       text: `My video practice breakdown in ${activeDiscipline.name}! Coach: "${clip.coachVoiceoverText}"`,
       url: window.location.href,
     });

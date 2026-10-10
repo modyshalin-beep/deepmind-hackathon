@@ -60,11 +60,11 @@ export default function SignUpPage() {
       {/* Brand Header */}
       <div className="mb-8 text-center relative z-10">
         <Link href="/" className="inline-flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#E8A5A5] via-[#A4C2F4] to-[#E9D78E] flex items-center justify-center font-black text-[#3E4348] text-lg shadow-sm group-hover:scale-105 transition-transform">
-            P
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#E8A5A5] via-[#A4C2F4] to-[#E9D78E] flex items-center justify-center font-black text-[#3E4348] text-xs shadow-sm group-hover:scale-105 transition-transform">
+            10K
           </div>
           <div className="text-left">
-            <span className="text-xl font-black tracking-tight text-[#3E4348] block leading-none">POCKET COACH</span>
+            <span className="text-xl font-black tracking-tight text-[#3E4348] block leading-none">TenK</span>
             <span className="text-[11px] text-[#E8A5A5] font-mono tracking-widest uppercase font-bold">Mindful Practice</span>
           </div>
         </Link>

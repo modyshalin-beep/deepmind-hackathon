@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pocket Coach — 10k-Hour AI Mentor & Deliberate Practice",
+  title: "TenK — 10,000-Hour AI Mentor & Deliberate Practice",
   description: "Real-time AI guided audio and camera coaching with Web Audio VAD and 30 FPS film study.",
 };
 

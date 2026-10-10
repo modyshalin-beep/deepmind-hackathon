@@ -95,10 +95,10 @@ export function HeaderNav({
           onClick={onShowLanding}
           className="flex items-center gap-2 group cursor-pointer text-left focus:outline-none"
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#E8A5A5] via-[#A4C2F4] to-[#E9D78E] flex items-center justify-center font-black text-[#3E4348] text-sm shadow-xs group-hover:scale-105 transition-transform">
-            P
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#E8A5A5] via-[#A4C2F4] to-[#E9D78E] flex items-center justify-center font-black text-[#3E4348] text-xs shadow-xs group-hover:scale-105 transition-transform">
+            10K
           </div>
-          <span className="font-black text-sm tracking-tight text-[#3E4348]">POCKET COACH</span>
+          <span className="font-black text-sm tracking-tight text-[#3E4348]">TenK</span>
         </button>
 
         {/* Skill Switcher Pill */}
