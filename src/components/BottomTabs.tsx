@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Video, Target, Film, Users, Layers } from 'lucide-react';
+import { BookOpen, Film, Users } from 'lucide-react';
 
 interface BottomTabsProps {
   activeTab: string;
@@ -11,16 +11,14 @@ interface BottomTabsProps {
 
 export function BottomTabs({ activeTab, onChangeTab, unreadClipsCount }: BottomTabsProps) {
   const tabs = [
-    { id: 'studio', label: 'AI Studio', icon: Video },
-    { id: 'activities', label: 'Activities', icon: Layers },
-    { id: 'mastery', label: '10k-Hr Mastery', icon: Target },
-    { id: 'film', label: 'Film Study', icon: Film, badge: unreadClipsCount },
+    { id: 'plans', label: 'Lesson Plans', icon: BookOpen },
+    { id: 'review', label: 'Review', icon: Film, badge: unreadClipsCount },
     { id: 'club', label: 'The Club', icon: Users },
   ];
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-[#F2F8FC]/95 backdrop-blur-2xl border-t border-[#D0E6FF] px-3 py-2 shadow-sm">
-      <div className="max-w-lg mx-auto flex items-center justify-around">
+    <nav className="fixed bottom-0 inset-x-0 z-40 bg-[#F2F8FC]/95 backdrop-blur-2xl border-t border-[#D0E6FF] px-4 py-2 shadow-sm">
+      <div className="max-w-md mx-auto flex items-center justify-around">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -28,19 +26,19 @@ export function BottomTabs({ activeTab, onChangeTab, unreadClipsCount }: BottomT
             <button
               key={tab.id}
               onClick={() => onChangeTab(tab.id)}
-              className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all relative cursor-pointer ${
+              className={`flex-1 flex flex-col items-center gap-1 py-1.5 px-3 rounded-2xl transition-all relative cursor-pointer ${
                 isActive
                   ? 'text-[#FF7F2D] font-bold scale-105'
                   : 'text-[#4A4B4B] hover:text-[#2D2E2E] font-medium'
               }`}
             >
-              <div className={`p-1.5 rounded-xl ${isActive ? 'bg-[#FEF6F4] border border-[#FF7F2D]/40 text-[#FF7F2D]' : ''}`}>
+              <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-[#FEF6F4] border border-[#FF7F2D]/40 text-[#FF7F2D] shadow-xs' : ''}`}>
                 <Icon className="w-5 h-5" />
               </div>
-              <span className="text-[10px] tracking-tight">{tab.label}</span>
+              <span className="text-[11px] tracking-tight">{tab.label}</span>
 
               {tab.badge && tab.badge > 0 ? (
-                <span className="absolute top-1 right-2 bg-[#FF7F2D] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+                <span className="absolute top-1 right-1/4 bg-[#FF7F2D] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
                   {tab.badge}
                 </span>
               ) : null}

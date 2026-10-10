@@ -1,21 +1,23 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Discipline, SessionReport, SkillLevel } from '@/types';
+import { Discipline, SessionReport, SkillLevel, CourseModule } from '@/types';
 import { CoachHaloStatus, LessonPhase, ConversationalExchange, speakCoachFeedback, stopCoachSpeaking, generateCoachResponseToUserSpeech, generateLiveSessionReport } from '@/lib/geminiLiveSimulator';
 import { AudioWaveform } from '@/components/AudioWaveform';
-import { Camera, Video, Volume2, Mic, MicOff, Sparkles, Award, ArrowRight, Zap, Play, Square, Pause, ShieldCheck, Flame, CheckCircle2, Clock, BookOpen, Settings, MessageSquare, HelpCircle, Eye, AlertCircle } from 'lucide-react';
+import { Camera, Video, Volume2, Mic, MicOff, Sparkles, Award, ArrowRight, ArrowLeft, Zap, Play, Square, Pause, ShieldCheck, Flame, CheckCircle2, Clock, BookOpen, Settings, MessageSquare, HelpCircle, Eye, AlertCircle } from 'lucide-react';
 
 interface StudioViewProps {
   disciplines: Discipline[];
   activeDiscipline: Discipline;
+  activeModule?: CourseModule;
   skillLevel: SkillLevel;
   onSelectDiscipline: (d: Discipline) => void;
   onOpenOnboarding: () => void;
   onSessionComplete: (report: SessionReport) => void;
+  onExitLesson?: () => void;
 }
 
-export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelectDiscipline, onOpenOnboarding, onSessionComplete }: StudioViewProps) {
+export function StudioView({ disciplines, activeDiscipline, activeModule, skillLevel, onSelectDiscipline, onOpenOnboarding, onSessionComplete, onExitLesson }: StudioViewProps) {
   const [isLessonActive, setIsLessonActive] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [lessonSeconds, setLessonSeconds] = useState(0);
@@ -39,6 +41,8 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
   const isLessonActiveRef = useRef<boolean>(false);
 
   const recognitionRef = useRef<any>(null);
+
+  const currentSteps = activeModule?.beginnerSteps || activeDiscipline.beginnerStepByStepPrep;
 
   // Fetch available audio devices (AirPods, Built-in Mic)
   const enumerateMicDevices = async () => {
@@ -184,14 +188,14 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     );
 
     let nextStep = currentStepIndex;
-    if (advanceStep && currentStepIndex < activeDiscipline.beginnerStepByStepPrep.length - 1) {
+    if (advanceStep && currentStepIndex < currentSteps.length - 1) {
       nextStep = currentStepIndex + 1;
       setCurrentStepIndex(nextStep);
     }
 
     // Trigger AI Visual Breakdown Overlay on Video Feed
     setActiveVisualReaction({
-      title: `AI Visual Reaction: ${activeDiscipline.name}`,
+      title: `AI Visual Reaction: ${activeModule ? activeModule.title : activeDiscipline.name}`,
       detail: responseText,
       stepNumber: nextStep + 1,
     });
@@ -230,12 +234,13 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
       try { recognitionRef.current.start(); } catch (e) {}
     }
 
-    const step1 = activeDiscipline.beginnerStepByStepPrep[0] || 'Place your feet 4 feet apart.';
-    const welcome = `Welcome to your 2-way live ${activeDiscipline.name} lesson! I am Coach ${activeDiscipline.coachPersona.name}. Let's do Step 1 together: ${step1} Speak into your AirPods or ask a question whenever you're set!`;
+    const step1 = currentSteps[0] || 'Place your feet in ready position.';
+    const lessonTitle = activeModule ? `${activeModule.title}` : activeDiscipline.name;
+    const welcome = `Welcome to your 2-way live ${lessonTitle} lesson! I am Coach ${activeDiscipline.coachPersona.name}. Let's do Step 1 together: ${step1} Speak into your AirPods or ask a question whenever you're set!`;
 
     setCurrentCoachSpeech(welcome);
     setActiveVisualReaction({
-      title: `Step 1 Breakdown: ${activeDiscipline.name}`,
+      title: `Step 1 Breakdown: ${lessonTitle}`,
       detail: step1,
       stepNumber: 1,
     });
@@ -261,6 +266,9 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
       autoBurstsCount,
       conversations.length
     );
+    if (activeModule) {
+      report.moduleId = activeModule.id;
+    }
     setCompletedReport(report);
     onSessionComplete(report);
   };
@@ -273,6 +281,15 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
 
   return (
     <div className="flex flex-col gap-4 pb-24">
+      {onExitLesson && (
+        <button
+          onClick={onExitLesson}
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white transition w-fit cursor-pointer bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to Lesson Plans
+        </button>
+      )}
+
       {/* 2-Way Conversational Header Banner */}
       <div className="bg-white rounded-2xl border border-[#D0E6FF] p-4 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
@@ -285,7 +302,9 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
                 {skillLevel} Level
               </span>
             </div>
-            <h2 className="text-lg font-bold text-[#2D2E2E] mt-0.5">{activeDiscipline.prescribedDrill}</h2>
+            <h2 className="text-lg font-bold text-[#2D2E2E] mt-0.5">
+              {activeModule ? `${activeModule.title}: ${activeModule.prescribedDrill}` : activeDiscipline.prescribedDrill}
+            </h2>
           </div>
 
           {/* Microphone Selector & Settings */}
@@ -324,8 +343,8 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-[#2D2E2E] flex items-center gap-1.5">
                 <BookOpen className="w-3.5 h-3.5 text-[#FF7F2D]" />
-                Step {currentStepIndex + 1} of {activeDiscipline.beginnerStepByStepPrep.length}: <strong className="text-[#FF7F2D] font-mono">
-                  {activeDiscipline.beginnerStepByStepPrep[currentStepIndex]}
+                Step {currentStepIndex + 1} of {currentSteps.length}: <strong className="text-[#FF7F2D] font-mono">
+                  {currentSteps[currentStepIndex]}
                 </strong>
               </span>
               <span className="font-mono text-[#4CB1FF] font-bold">{formatTime(lessonSeconds)}</span>
