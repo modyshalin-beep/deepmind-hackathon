@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
 import { CoachProfile, Discipline } from '@/types';
 import { 
   ChevronDown, Plus, Sparkles, Check, 
@@ -9,6 +8,7 @@ import {
   Headphones, Battery, User, LogOut
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
 
 interface HeaderNavProps {
   coachProfile: CoachProfile;
@@ -16,7 +16,6 @@ interface HeaderNavProps {
   activeDiscipline: Discipline;
   onSelectDiscipline: (d: Discipline) => void;
   onOpenAddSkill: () => void;
-  onTriggerOnboarding: () => void;
   onShowLanding?: () => void;
 }
 
@@ -26,7 +25,6 @@ export function HeaderNav({
   activeDiscipline,
   onSelectDiscipline,
   onOpenAddSkill,
-  onTriggerOnboarding,
   onShowLanding,
 }: HeaderNavProps) {
   const { user, signOutUser } = useAuth();
@@ -59,57 +57,60 @@ export function HeaderNav({
 
   const getDisciplineIcon = (id: string) => {
     switch (id) {
-      case 'tennis': return <Activity className="w-3.5 h-3.5 text-[#FF7F2D]" />;
-      case 'boxing': return <Zap className="w-3.5 h-3.5 text-[#FF7F2D]" />;
-      case 'dance': return <Sparkles className="w-3.5 h-3.5 text-[#9C7BAC]" />;
-      case 'cooking': return <Utensils className="w-3.5 h-3.5 text-[#4CB1FF]" />;
-      case 'guitar': return <Music className="w-3.5 h-3.5 text-[#9C7BAC]" />;
-      case 'yoga': return <Heart className="w-3.5 h-3.5 text-[#FF7F2D]" />;
-      case 'golf': return <Target className="w-3.5 h-3.5 text-[#7CB078]" />;
-      default: return <Activity className="w-3.5 h-3.5 text-[#FF7F2D]" />;
+      case 'tennis': return <Activity className="w-3.5 h-3.5 text-[#E8A5A5]" />;
+      case 'boxing': return <Zap className="w-3.5 h-3.5 text-[#E9D78E]" />;
+      case 'dance': return <Sparkles className="w-3.5 h-3.5 text-[#A4C2F4]" />;
+      case 'cooking': return <Utensils className="w-3.5 h-3.5 text-[#B5C99A]" />;
+      case 'guitar': return <Music className="w-3.5 h-3.5 text-[#E8A5A5]" />;
+      case 'yoga': return <Heart className="w-3.5 h-3.5 text-[#E8A5A5]" />;
+      case 'golf': return <Target className="w-3.5 h-3.5 text-[#B5C99A]" />;
+      default: return <Activity className="w-3.5 h-3.5 text-[#A4C2F4]" />;
     }
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#F2F8FC]/90 backdrop-blur-xl border-b border-[#D0E6FF] px-4 py-2.5">
+    <header className="sticky top-0 z-40 bg-[#F7F3EE]/95 backdrop-blur-xl border-b border-[#E8E2D8] px-4 py-2.5">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
         
         {/* Brand & Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#FF7F2D] to-[#9C7BAC] flex items-center justify-center font-black text-white shadow-sm shadow-[#FF7F2D]/20 group-hover:scale-105 transition-transform">
+        <button
+          onClick={onShowLanding}
+          className="flex items-center gap-2.5 group cursor-pointer text-left focus:outline-none"
+        >
+          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#E8A5A5] via-[#A4C2F4] to-[#E9D78E] flex items-center justify-center font-black text-[#3E4348] text-base shadow-xs group-hover:scale-105 transition-transform">
             P
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-black text-sm tracking-tight text-[#2D2E2E] hidden sm:inline">POCKET COACH</span>
-              <span className="text-[9px] font-bold bg-[#F5FAF5] text-[#7CB078] border border-[#7CB078]/40 px-1.5 py-0.5 rounded font-mono uppercase">
-                AI LIVE
+              <span className="font-black text-sm tracking-tight text-[#3E4348] hidden sm:inline">POCKET COACH</span>
+              <span className="text-[9px] font-bold bg-[#B5C99A]/30 text-[#42592B] border border-[#B5C99A]/50 px-2 py-0.5 rounded-full font-mono uppercase">
+                COZY AI
               </span>
             </div>
-            <p className="text-[10px] text-[#4A4B4B] font-medium hidden md:block">10k-Hour Deliberate Practice</p>
+            <p className="text-[10px] text-[#6E757C] font-medium hidden md:block">Mindful 10k-Hour Practice</p>
           </div>
-        </Link>
+        </button>
 
         {/* Intuitive Skill Switcher Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="bg-white hover:bg-[#F5F6FC] border border-[#D0E6FF] hover:border-[#9C7BAC] px-3.5 py-1.5 rounded-full flex items-center gap-2 transition cursor-pointer shadow-xs"
+            className="bg-[#FAF9F6] hover:bg-white border border-[#E8E2D8] hover:border-[#A4C2F4] px-4 py-1.5 rounded-full flex items-center gap-2 transition cursor-pointer shadow-xs"
           >
             <div className="flex items-center gap-1.5">
               {getDisciplineIcon(activeDiscipline.id)}
-              <span className="text-xs font-bold text-[#2D2E2E]">
+              <span className="text-xs font-bold text-[#3E4348]">
                 {activeDiscipline.shortName || activeDiscipline.name}
               </span>
             </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-[#4A4B4B] transition-transform ${isDropdownOpen ? 'rotate-180 text-[#FF7F2D]' : ''}`} />
+            <ChevronDown className={`w-3.5 h-3.5 text-[#6E757C] transition-transform ${isDropdownOpen ? 'rotate-180 text-[#E8A5A5]' : ''}`} />
           </button>
 
           {/* Dropdown Menu */}
           {isDropdownOpen && (
-            <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-white border border-[#D0E6FF] rounded-2xl p-2 shadow-2xl z-50 space-y-1 animate-fade-in">
-              <span className="text-[10px] font-bold text-[#4A4B4B] uppercase tracking-wider px-2 py-1 block">
-                Your Enrolled Skills:
+            <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-[#FAF9F6] border border-[#E8E2D8] rounded-3xl p-2.5 shadow-xl z-50 space-y-1 animate-fade-in">
+              <span className="text-[10px] font-bold text-[#6E757C] uppercase tracking-wider px-2 py-1 block">
+                Your Practice Skills:
               </span>
 
               {enrolledDisciplines.map((d) => {
@@ -121,69 +122,49 @@ export function HeaderNav({
                       onSelectDiscipline(d);
                       setIsDropdownOpen(false);
                     }}
-                    className={`w-full px-2.5 py-2 rounded-xl flex items-center justify-between text-left transition cursor-pointer ${
+                    className={`w-full px-3 py-2 rounded-2xl flex items-center justify-between text-left transition cursor-pointer ${
                       isActive
-                        ? 'bg-[#FEF6F4] text-[#2D2E2E] font-bold border border-[#FF7F2D]/30'
-                        : 'hover:bg-[#F5F6FC] text-[#4A4B4B]'
+                        ? 'bg-[#A4C2F4]/25 text-[#3E4348] font-bold border border-[#A4C2F4]/50'
+                        : 'hover:bg-white text-[#6E757C] hover:text-[#3E4348]'
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       {getDisciplineIcon(d.id)}
                       <span className="text-xs">{d.name}</span>
                     </div>
-                    {isActive && <Check className="w-3.5 h-3.5 text-[#FF7F2D]" />}
+                    {isActive && <Check className="w-3.5 h-3.5 text-[#3E4348]" />}
                   </button>
                 );
               })}
 
-              <div className="pt-1 border-t border-[#D0E6FF] space-y-0.5">
+              <div className="pt-1.5 border-t border-[#E8E2D8]">
                 <button
                   onClick={() => {
                     setIsDropdownOpen(false);
                     onOpenAddSkill();
                   }}
-                  className="w-full px-2.5 py-1.5 rounded-xl flex items-center gap-2 text-xs font-bold text-[#FF7F2D] hover:bg-[#FEF6F4] transition cursor-pointer"
+                  className="w-full px-3 py-2 rounded-2xl flex items-center gap-2 text-xs font-bold text-[#3E4348] hover:bg-[#E8A5A5]/25 transition cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-3.5 h-3.5 text-[#E8A5A5]" />
                   <span>Learn Another Skill...</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    onTriggerOnboarding();
-                  }}
-                  className="w-full px-2.5 py-1.5 rounded-xl flex items-center gap-2 text-xs font-medium text-[#4A4B4B] hover:text-[#2D2E2E] hover:bg-[#F5F6FC] transition cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#9C7BAC]" />
-                  <span>Restart Onboarding Intake</span>
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Right Section: Onboarding button, AirPods & Athlete Profile */}
+        {/* Right Section: AirPods & Athlete Profile */}
         <div className="flex items-center gap-2 sm:gap-2.5">
-          <button
-            onClick={onTriggerOnboarding}
-            className="bg-[#FEF6F4] hover:bg-[#ffede5] text-[#FF7F2D] border border-[#FF7F2D]/40 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs hidden sm:flex"
-            title="Open Onboarding Flow"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#FF7F2D]" />
-            <span>Onboarding</span>
-          </button>
-
           {/* AirPods Hardware Badge */}
-          <div className="bg-white border border-[#D0E6FF] px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xs">
+          <div className="bg-[#FAF9F6] border border-[#E8E2D8] px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xs">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4CB1FF] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#4CB1FF]"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#A4C2F4] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#A4C2F4]"></span>
             </span>
-            <Headphones className="w-3.5 h-3.5 text-[#4CB1FF]" />
-            <span className="text-xs font-semibold text-[#4A4B4B] hidden md:inline">AirPods Pro</span>
-            <span className="text-[10px] font-mono text-[#4A4B4B] border-l border-[#D0E6FF] pl-1.5 flex items-center gap-1">
-              <Battery className="w-3 h-3 text-[#4A4B4B]" /> {coachProfile.batteryLevel}%
+            <Headphones className="w-3.5 h-3.5 text-[#A4C2F4]" />
+            <span className="text-xs font-semibold text-[#3E4348] hidden md:inline">AirPods</span>
+            <span className="text-[10px] font-mono text-[#6E757C] border-l border-[#E8E2D8] pl-1.5 flex items-center gap-1">
+              <Battery className="w-3 h-3 text-[#6E757C]" /> {coachProfile.batteryLevel}%
             </span>
           </div>
 
@@ -191,45 +172,45 @@ export function HeaderNav({
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="bg-white hover:bg-[#F5F6FC] border border-[#D0E6FF] hover:border-[#9C7BAC] pl-1.5 pr-2.5 py-1 rounded-full flex items-center gap-2 transition cursor-pointer shadow-xs"
+              className="bg-[#FAF9F6] hover:bg-white border border-[#E8E2D8] hover:border-[#A4C2F4] pl-1.5 pr-2.5 py-1 rounded-full flex items-center gap-2 transition cursor-pointer shadow-xs"
             >
-              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#9C7BAC] to-[#4CB1FF] text-white font-black text-xs flex items-center justify-center">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#A4C2F4] to-[#E8A5A5] text-[#3E4348] font-black text-xs flex items-center justify-center">
                 {initial}
               </div>
-              <span className="text-xs font-bold text-[#4A4B4B] hidden sm:inline max-w-[100px] truncate">
+              <span className="text-xs font-bold text-[#3E4348] hidden sm:inline max-w-[100px] truncate">
                 {studentName}
               </span>
-              <ChevronDown className="w-3 h-3 text-[#4A4B4B]" />
+              <ChevronDown className="w-3 h-3 text-[#6E757C]" />
             </button>
 
             {/* Dropdown Menu */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-52 bg-white border border-[#D0E6FF] rounded-2xl p-2 shadow-xl z-50 animate-fade-in space-y-1">
-                <div className="px-3 py-2 border-b border-[#D0E6FF]">
-                  <span className="text-[10px] font-bold text-[#4A4B4B] uppercase tracking-wider block">Athlete Profile</span>
-                  <p className="text-xs font-bold text-[#2D2E2E] truncate">{studentName}</p>
-                  {user?.email && <p className="text-[10px] text-[#4A4B4B] font-mono truncate">{user.email}</p>}
+              <div className="absolute right-0 mt-2 w-52 bg-[#FAF9F6] border border-[#E8E2D8] rounded-3xl p-2.5 shadow-xl z-50 animate-fade-in space-y-1">
+                <div className="px-3 py-2 border-b border-[#E8E2D8]">
+                  <span className="text-[10px] font-bold text-[#6E757C] uppercase tracking-wider block">Athlete Profile</span>
+                  <p className="text-xs font-bold text-[#3E4348] truncate">{studentName}</p>
+                  {user?.email && <p className="text-[10px] text-[#6E757C] font-mono truncate">{user.email}</p>}
                 </div>
 
                 <Link
                   href="/sign-in"
                   onClick={() => setShowUserMenu(false)}
-                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#4A4B4B] hover:bg-[#F5F6FC] rounded-xl transition"
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#3E4348] hover:bg-white rounded-2xl transition"
                 >
-                  <User className="w-3.5 h-3.5 text-[#FF7F2D]" /> Switch Athlete
+                  <User className="w-3.5 h-3.5 text-[#A4C2F4]" /> Switch Profile
                 </Link>
 
                 <Link
                   href="/sign-up"
                   onClick={() => setShowUserMenu(false)}
-                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#4A4B4B] hover:bg-[#F5F6FC] rounded-xl transition"
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#3E4348] hover:bg-white rounded-2xl transition"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-[#9C7BAC]" /> Register New Athlete
+                  <Sparkles className="w-3.5 h-3.5 text-[#E8A5A5]" /> New Account
                 </Link>
 
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition text-left cursor-pointer"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-2xl transition text-left cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" /> Sign Out
                 </button>

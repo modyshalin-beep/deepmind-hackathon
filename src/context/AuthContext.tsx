@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ...profile,
       studentName: matched.name,
       skillLevel: matched.skillLevel || profile.skillLevel,
+      hasCompletedOnboarding: true,
     });
 
     return { success: true };
@@ -124,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ...profile,
       studentName: DEMO_USER.name,
       skillLevel: DEMO_USER.skillLevel || 'beginner',
+      hasCompletedOnboarding: true,
     });
   };
 

@@ -17,7 +17,7 @@ export function BottomTabs({ activeTab, onChangeTab, unreadClipsCount }: BottomT
   ];
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-[#F2F8FC]/95 backdrop-blur-2xl border-t border-[#D0E6FF] px-4 py-2 shadow-sm">
+    <nav className="fixed bottom-0 inset-x-0 z-40 bg-[#F7F3EE]/95 backdrop-blur-2xl border-t border-[#E8E2D8] px-4 py-2.5 shadow-sm">
       <div className="max-w-md mx-auto flex items-center justify-around">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -28,17 +28,17 @@ export function BottomTabs({ activeTab, onChangeTab, unreadClipsCount }: BottomT
               onClick={() => onChangeTab(tab.id)}
               className={`flex-1 flex flex-col items-center gap-1 py-1.5 px-3 rounded-2xl transition-all relative cursor-pointer ${
                 isActive
-                  ? 'text-[#FF7F2D] font-bold scale-105'
-                  : 'text-[#4A4B4B] hover:text-[#2D2E2E] font-medium'
+                  ? 'text-[#3E4348] font-black scale-105'
+                  : 'text-[#6E757C] hover:text-[#3E4348] font-medium'
               }`}
             >
-              <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-[#FEF6F4] border border-[#FF7F2D]/40 text-[#FF7F2D] shadow-xs' : ''}`}>
+              <div className={`p-1.5 rounded-2xl transition-all ${isActive ? 'bg-[#E8A5A5]/30 border border-[#E8A5A5]/60 text-[#3E4348] shadow-xs' : ''}`}>
                 <Icon className="w-5 h-5" />
               </div>
               <span className="text-[11px] tracking-tight">{tab.label}</span>
 
               {tab.badge && tab.badge > 0 ? (
-                <span className="absolute top-1 right-1/4 bg-[#FF7F2D] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+                <span className="absolute top-1 right-1/4 bg-[#E8A5A5] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
                   {tab.badge}
                 </span>
               ) : null}

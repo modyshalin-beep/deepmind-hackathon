@@ -18,13 +18,13 @@ export const DEMO_USER: UserAccount = {
 };
 
 export function loadCurrentUser(): UserAccount | null {
-  if (typeof window === 'undefined') return DEMO_USER;
+  if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(CURRENT_USER_KEY);
-    if (!raw) return DEMO_USER;
+    if (!raw) return null;
     return JSON.parse(raw);
   } catch {
-    return DEMO_USER;
+    return null;
   }
 }
 

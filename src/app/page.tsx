@@ -15,8 +15,10 @@ import { ReviewView } from '@/components/ReviewView';
 import { ClubView } from '@/components/ClubView';
 import { StudioView } from '@/components/StudioView';
 import { OnboardingModal } from '@/components/OnboardingModal';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
+  const { user, loading } = useAuth();
   const [disciplines, setDisciplines] = useState<Discipline[]>(INITIAL_DISCIPLINES);
   const [activeDiscipline, setActiveDiscipline] = useState<Discipline>(INITIAL_DISCIPLINES[0]);
   const [coachProfile, setCoachProfile] = useState<CoachProfile>(INITIAL_COACH_PROFILE);
@@ -39,7 +41,7 @@ export default function Home() {
   const [onboardingPreselectedSkill, setOnboardingPreselectedSkill] = useState<string | undefined>(undefined);
   const [isAddingSkillOnly, setIsAddingSkillOnly] = useState<boolean>(false);
 
-  // Load persistent storage on initial mount
+  // Load persistent storage and evaluate authenticated onboarding state
   useEffect(() => {
     const profile = loadCoachProfile();
     const clips = loadVideoClips();
@@ -52,11 +54,15 @@ export default function Home() {
     const activeDisc = INITIAL_DISCIPLINES.find(d => d.id === profile.activeDisciplineId) || INITIAL_DISCIPLINES[0];
     setActiveDiscipline(activeDisc);
 
-    // If user has already completed onboarding previously, skip landing page
-    if (profile.hasCompletedOnboarding) {
-      setShowLanding(false);
+    // If user is authenticated and has completed onboarding, show dashboard; otherwise default to public landing page
+    if (!loading) {
+      if (user && profile.hasCompletedOnboarding) {
+        setShowLanding(false);
+      } else {
+        setShowLanding(true);
+      }
     }
-  }, []);
+  }, [user, loading]);
 
   const handleSelectDiscipline = (disc: Discipline) => {
     setActiveDiscipline(disc);
@@ -268,7 +274,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F2F8FC] text-[#4A4B4B] flex flex-col font-sans selection:bg-[#D0E6FF] selection:text-[#4A4B4B]">
+    <div className="min-h-screen bg-[#F7F3EE] text-[#3E4348] flex flex-col font-sans selection:bg-[#A4C2F4]/40 selection:text-[#3E4348]">
       {/* Top Header with Intuitive Skill Switcher Dropdown */}
       <HeaderNav 
         coachProfile={coachProfile} 
@@ -276,7 +282,6 @@ export default function Home() {
         activeDiscipline={activeDiscipline}
         onSelectDiscipline={handleSelectDiscipline}
         onOpenAddSkill={() => handleOpenAddSkill()}
-        onTriggerOnboarding={() => setShowLanding(true)}
         onShowLanding={() => setShowLanding(true)}
       />
 

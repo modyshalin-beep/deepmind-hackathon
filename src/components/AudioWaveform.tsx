@@ -101,11 +101,11 @@ export function AudioWaveform({ stream, isListening, isCoachSpeaking, onVoiceAct
   }, [stream, isListening, isCoachSpeaking, onVoiceActivity]);
 
   return (
-    <div className="bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl border border-[#D0E6FF] flex items-center gap-3 shadow-sm">
+    <div className="bg-[#FAF9F6]/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-[#E8E2D8] flex items-center gap-3 shadow-xs">
       <div className="flex items-center gap-1.5">
-        <Mic className={`w-4 h-4 transition-all ${isSpeaking ? 'text-[#FF7F2D] animate-pulse scale-110' : 'text-[#4A4B4B]'}`} />
-        <span className={`text-[11px] font-bold uppercase font-mono ${isSpeaking ? 'text-[#FF7F2D]' : 'text-[#4A4B4B]'}`}>
-          {isSpeaking ? `STUDENT VOICE DETECTED (${volumePercent}%)` : 'STUDENT MIC READY'}
+        <Mic className={`w-4 h-4 transition-all ${isSpeaking ? 'text-[#E8A5A5] animate-pulse scale-110' : 'text-[#6E757C]'}`} />
+        <span className={`text-[11px] font-bold uppercase font-mono ${isSpeaking ? 'text-[#E8A5A5]' : 'text-[#6E757C]'}`}>
+          {isSpeaking ? `VOICE DETECTED (${volumePercent}%)` : 'STUDENT MIC READY'}
         </span>
       </div>
 
@@ -116,8 +116,8 @@ export function AudioWaveform({ stream, isListening, isCoachSpeaking, onVoiceAct
             key={idx}
             className={`w-1 rounded-full transition-all duration-75 ${
               isSpeaking
-                ? 'bg-gradient-to-t from-[#FF7F2D] to-[#4CB1FF] shadow-[0_0_8px_rgba(255,127,45,0.4)]'
-                : 'bg-[#D0E6FF]'
+                ? 'bg-gradient-to-t from-[#E8A5A5] via-[#A4C2F4] to-[#B5C99A]'
+                : 'bg-[#E8E2D8]'
             }`}
             style={{ height: `${h}%` }}
           />
