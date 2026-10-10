@@ -40,6 +40,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedAudioDeviceId, setSelectedAudioDeviceId] = useState<string>('');
   const [completedReport, setCompletedReport] = useState<SessionReport | null>(null);
+  const [stepHoldCountdown, setStepHoldCountdown] = useState<number | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -47,27 +48,28 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
   const audioChunksRef = useRef<Blob[]>([]);
   const latestSpeechTranscriptRef = useRef<string>('');
   
-  // Motion Engine Refs
+  // Motion Engine & Pacing Refs
   const motionCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const prevPixelFrameRef = useRef<Uint8ClampedArray | null>(null);
   const animFrameIdRef = useRef<number | null>(null);
   const lastCaptureTimeRef = useRef<number>(0);
   const settleStartTimeRef = useRef<number | null>(null);
   const isMovingRef = useRef<boolean>(false);
+  const ambientNoiseFloorRef = useRef<number>(12);
 
   const lessonTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const stepPacingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const handsFreeSilenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const timeInCurrentStepRef = useRef<number>(0);
+  const max10sStepTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentStepIndexRef = useRef<number>(0);
   const isLessonActiveRef = useRef<boolean>(false);
   const isCoachSpeakingRef = useRef<boolean>(false);
   const isRecognizingRef = useRef<boolean>(false);
+  const hasInspectedCurrentStepRef = useRef<boolean>(false);
 
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     currentStepIndexRef.current = currentStepIndex;
+    hasInspectedCurrentStepRef.current = false;
   }, [currentStepIndex]);
 
   useEffect(() => {
@@ -82,6 +84,17 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
       .trim();
   };
 
+  // Color coding for Pose Alignment Score
+  const getScoreColorBadge = (score: number) => {
+    if (score < 7.0) {
+      return 'bg-rose-600 text-white border-rose-400 shadow-rose-950/80';
+    } else if (score < 8.3) {
+      return 'bg-amber-400 text-slate-950 border-amber-300 shadow-amber-950/80';
+    } else {
+      return 'bg-emerald-400 text-slate-950 border-emerald-300 shadow-emerald-950/80';
+    }
+  };
+
   // Manual test voice button
   const handleTestVoicePlayback = () => {
     primeSpeechSynthesis();
@@ -90,7 +103,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     speakCoachFeedback("Hello! This is Coach Maya testing voice output.");
   };
 
-  // Capture live video frame from main camera video feed
+  // Capture live video frame from camera view
   const captureCameraFrameBase64 = (): string | null => {
     if (!videoRef.current) return null;
     try {
@@ -107,8 +120,34 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     }
   };
 
-  // Perform Gemini Vision Camera Frame Inspection (Respects Audio Non-Interference)
-  const analyzeCameraFrameWithGeminiVision = async (userPromptText: string = '', speakOutLoud: boolean = false) => {
+  // Step Advancement Method
+  const handleNextStep = useCallback(() => {
+    if (max10sStepTimerRef.current) clearTimeout(max10sStepTimerRef.current);
+    setStepHoldCountdown(null);
+
+    const currIdx = currentStepIndexRef.current;
+    if (currIdx < activeDiscipline.beginnerStepByStepPrep.length - 1) {
+      const nextIdx = currIdx + 1;
+      setCurrentStepIndex(nextIdx);
+      currentStepIndexRef.current = nextIdx;
+      hasInspectedCurrentStepRef.current = false;
+
+      const cleanText = formatCleanStepText(activeDiscipline.beginnerStepByStepPrep[nextIdx]);
+      const message = `Step ${nextIdx + 1}: ${cleanText}`;
+      setCurrentCoachSpeech(message);
+      speakCoachFeedback(message);
+    } else {
+      const message = `Full posture prep complete! Now holding full ${activeDiscipline.prescribedDrill} flow execution!`;
+      setCurrentCoachSpeech(message);
+      speakCoachFeedback(message);
+    }
+  }, [activeDiscipline]);
+
+  // Camera Inspection via Gemini 2.5 Flash Vision API (Gives Feedback FIRST, then 10s Hold -> Auto-Advance)
+  const analyzeCameraFrameWithGeminiVision = async (userPromptText: string = '') => {
+    if (hasInspectedCurrentStepRef.current) return;
+    hasInspectedCurrentStepRef.current = true;
+
     const frameBase64 = captureCameraFrameBase64();
     const savedKey = typeof window !== 'undefined' ? localStorage.getItem('pocket_coach_gemini_key') || '' : '';
 
@@ -121,7 +160,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
           frameBase64,
           disciplineId: activeDiscipline.id,
           skillLevel,
-          userPrompt: userPromptText,
+          userPrompt: userPromptText || `Step ${currentStepIndexRef.current + 1}: ${activeDiscipline.beginnerStepByStepPrep[currentStepIndexRef.current]}`,
           apiKey: savedKey,
         }),
       });
@@ -131,37 +170,42 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
         praisePoint: data.praisePoint,
         correctionPoint: data.correctionPoint,
         alignmentScore: data.alignmentScore,
-        title: `Camera Inspection: ${activeDiscipline.name}`,
+        title: `Camera Analysis: ${activeDiscipline.name}`,
       });
 
-      // NON-INTERFERENCE GUARD: Only speak if explicitly allowed AND channel is quiet!
-      if (speakOutLoud && !isRecordingAudioRef.current && !isCoachSpeakingRef.current) {
-        const spokenFeedback = data.coachSpeech || `I see your posture on camera! Alignment looks solid.`;
+      if (!isRecordingAudioRef.current) {
+        const spokenFeedback = data.coachSpeech || `I see your posture on camera! Alignment verified.`;
         stopCoachSpeaking();
         setHaloStatus('coach_speaking');
         setCurrentCoachSpeech(spokenFeedback);
 
         isCoachSpeakingRef.current = true;
-        await speakCoachFeedback(
-          spokenFeedback,
-          () => {
-            setHaloStatus('coach_speaking');
-            isCoachSpeakingRef.current = true;
-          },
-          () => {
-            setHaloStatus('ready');
-            isCoachSpeakingRef.current = false;
+        await speakCoachFeedback(spokenFeedback);
+
+        // 10-Second Posture Practice Hold Timer, then AUTO-ADVANCE!
+        let countdown = 10;
+        setStepHoldCountdown(countdown);
+
+        if (max10sStepTimerRef.current) clearInterval(max10sStepTimerRef.current);
+        max10sStepTimerRef.current = setInterval(() => {
+          countdown -= 1;
+          setStepHoldCountdown(countdown);
+
+          if (countdown <= 0) {
+            if (max10sStepTimerRef.current) clearInterval(max10sStepTimerRef.current);
+            setStepHoldCountdown(null);
+            handleNextStep();
           }
-        );
+        }, 1000);
       }
     } catch (err) {
       console.warn('Vision analysis error:', err);
     } finally {
-      if (haloStatus === 'burst_capturing') setHaloStatus('ready');
+      setHaloStatus('ready');
     }
   };
 
-  // Real-Time Pixel-Delta Motion Detection Loop (Runs on low-res 64x64 hidden canvas)
+  // Adaptive Pixel-Delta Camera Motion & Settle Engine (Traffic Light Badge)
   const runMotionDetectionLoop = useCallback(() => {
     if (!videoRef.current || !isLessonActiveRef.current) return;
 
@@ -183,7 +227,6 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
         let pixelDeltaSum = 0;
         const prevData = prevPixelFrameRef.current;
 
-        // Sample every 4th byte (RGB diff)
         for (let i = 0; i < frameData.length; i += 8) {
           const diffR = Math.abs(frameData[i] - prevData[i]);
           const diffG = Math.abs(frameData[i + 1] - prevData[i + 1]);
@@ -193,33 +236,31 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
 
         const avgDelta = pixelDeltaSum / (64 * 64);
         const now = Date.now();
-        const MOTION_THRESHOLD = 8.5; // Sensitivity threshold for motion vs still
-        const COOLDOWN_MS = 9000; // Minimum 9s between peak camera captures
 
-        if (avgDelta > MOTION_THRESHOLD) {
-          // Movement detected
+        ambientNoiseFloorRef.current = (ambientNoiseFloorRef.current * 0.95) + (avgDelta * 0.05);
+        const DYNAMIC_MOTION_THRESHOLD = Math.max(14.0, ambientNoiseFloorRef.current * 1.6);
+
+        if (avgDelta > DYNAMIC_MOTION_THRESHOLD) {
           isMovingRef.current = true;
           settleStartTimeRef.current = null;
           setMotionState('moving');
-        } else if (isMovingRef.current) {
-          // Motion dropped below threshold -> User is settling into posture/stance!
-          if (!settleStartTimeRef.current) {
-            settleStartTimeRef.current = now;
-          } else if (now - settleStartTimeRef.current >= 1100) {
-            // User held still for 1.1s -> SETTLED STANCE CONFIRMED!
-            isMovingRef.current = false;
-            settleStartTimeRef.current = null;
-            setMotionState('settled');
+        } else {
+          // Stillness
+          if (isMovingRef.current || settleStartTimeRef.current === null) {
+            if (!settleStartTimeRef.current) {
+              settleStartTimeRef.current = now;
+            } else if (now - settleStartTimeRef.current >= 800) {
+              // 0.8s STILLNESS -> SETTLED POSE VERIFIED!
+              isMovingRef.current = false;
+              setMotionState('settled');
 
-            // Trigger peak keyframe capture if cooldown elapsed and not recording voice
-            if (now - lastCaptureTimeRef.current >= COOLDOWN_MS && !isRecordingAudioRef.current) {
-              lastCaptureTimeRef.current = now;
-              setAutoBurstsCount(prev => prev + 1);
-              analyzeCameraFrameWithGeminiVision('', true); // Speak pose correction when settled!
+              if (!hasInspectedCurrentStepRef.current && !isRecordingAudioRef.current) {
+                lastCaptureTimeRef.current = now;
+                setAutoBurstsCount(prev => prev + 1);
+                analyzeCameraFrameWithGeminiVision('');
+              }
             }
           }
-        } else {
-          setMotionState('idle');
         }
       }
 
@@ -229,7 +270,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     animFrameIdRef.current = requestAnimationFrame(runMotionDetectionLoop);
   }, []);
 
-  // Start/Stop Motion Detection Loop when lesson is active
+  // Motion Detection Loop Trigger
   useEffect(() => {
     if (isLessonActive && !isPaused) {
       animFrameIdRef.current = requestAnimationFrame(runMotionDetectionLoop);
@@ -285,7 +326,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     }
   };
 
-  // Robust Hands-Free Speech Recognizer
+  // WebSpeech Recognizer
   const setupSpeechRecognition = () => {
     if (typeof window === 'undefined') return;
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -297,48 +338,17 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
       }
 
       const recog = new SpeechRecognition();
-      recog.continuous = true;
+      recog.continuous = false;
       recog.interimResults = true;
       recog.lang = 'en-US';
 
-      recog.onstart = () => {
-        isRecognizingRef.current = true;
-      };
-
       recog.onresult = (event: any) => {
-        let fullSentence = '';
-        for (let i = 0; i < event.results.length; i++) {
-          fullSentence += event.results[i][0].transcript + ' ';
+        let text = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          text += event.results[i][0].transcript;
         }
-        if (fullSentence.trim()) {
-          latestSpeechTranscriptRef.current = fullSentence.trim();
-
-          if (handsFreeSilenceTimerRef.current) clearTimeout(handsFreeSilenceTimerRef.current);
-          handsFreeSilenceTimerRef.current = setTimeout(() => {
-            if (latestSpeechTranscriptRef.current.trim() && isLessonActiveRef.current && !isRecordingAudioRef.current) {
-              const text = latestSpeechTranscriptRef.current.trim();
-              latestSpeechTranscriptRef.current = '';
-              handleUserVoiceInput(text);
-            }
-          }, 1200);
-        }
-      };
-
-      recog.onerror = (e: any) => {
-        isRecognizingRef.current = false;
-        if (isLessonActiveRef.current && !isRecordingAudioRef.current) {
-          setTimeout(() => {
-            try { recog.start(); } catch {}
-          }, 400);
-        }
-      };
-
-      recog.onend = () => {
-        isRecognizingRef.current = false;
-        if (isLessonActiveRef.current && !isRecordingAudioRef.current) {
-          setTimeout(() => {
-            try { recog.start(); } catch {}
-          }, 300);
+        if (text.trim()) {
+          latestSpeechTranscriptRef.current = text.trim();
         }
       };
 
@@ -359,22 +369,15 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     };
   }, []);
 
-  // Lesson Second Timer
+  // Lesson Second Counter
   useEffect(() => {
     isLessonActiveRef.current = isLessonActive;
 
     if (isLessonActive && !isPaused) {
-      if (recognitionRef.current && !isRecognizingRef.current) {
-        try { recognitionRef.current.start(); } catch {}
-      }
-
       lessonTimerRef.current = setInterval(() => {
         setLessonSeconds(prev => prev + 1);
       }, 1000);
     } else {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
-      }
       if (lessonTimerRef.current) clearInterval(lessonTimerRef.current);
     }
 
@@ -383,85 +386,34 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     };
   }, [isLessonActive, isPaused]);
 
-  // UN-RESETTABLE Step Advancement Engine (Only ticks when quiet and not recording)
+  // Safety Un-Hang Guard: If user hasn't settled after 6 seconds, force camera inspection
   useEffect(() => {
     if (isLessonActive && !isPaused) {
-      stepPacingTimerRef.current = setInterval(() => {
-        if (!isRecordingAudioRef.current && !isCoachSpeakingRef.current) {
-          timeInCurrentStepRef.current += 1;
-
-          if (timeInCurrentStepRef.current >= 12) {
-            timeInCurrentStepRef.current = 0;
-            const currIdx = currentStepIndexRef.current;
-            
-            if (currIdx < activeDiscipline.beginnerStepByStepPrep.length - 1) {
-              const nextIdx = currIdx + 1;
-              setCurrentStepIndex(nextIdx);
-              const cleanText = formatCleanStepText(activeDiscipline.beginnerStepByStepPrep[nextIdx]);
-              const message = `Step ${nextIdx + 1}: ${cleanText}`;
-              setCurrentCoachSpeech(message);
-              speakCoachFeedback(message);
-              analyzeCameraFrameWithGeminiVision('', false);
-            } else {
-              // Flows smoothly into Full Posture Practice Hold!
-              const flowMessages = [
-                `All 15 prep steps verified on camera! Holding full ${activeDiscipline.prescribedDrill} posture hold. Inhale long, exhale deep!`,
-                `I see your form on camera! Maintain parallel arm extension and keep gaze focused forward over fingertips.`,
-                `Awesome posture stamina! Hold deep alignment and sink 1 inch lower into your front leg.`,
-                `Fantastic practice! You have mastered all step-by-step alignment drills for ${activeDiscipline.name}.`
-              ];
-              const randomIndex = Math.floor(Math.random() * flowMessages.length);
-              const message = flowMessages[randomIndex];
-              setCurrentCoachSpeech(message);
-              speakCoachFeedback(message);
-              analyzeCameraFrameWithGeminiVision('', false);
-            }
-          }
+      const maxSettleGuardTimer = setInterval(() => {
+        if (!hasInspectedCurrentStepRef.current && !isRecordingAudioRef.current && !isCoachSpeakingRef.current) {
+          analyzeCameraFrameWithGeminiVision('');
         }
-      }, 1000);
-    } else {
-      if (stepPacingTimerRef.current) clearInterval(stepPacingTimerRef.current);
+      }, 6000);
+
+      return () => clearInterval(maxSettleGuardTimer);
     }
+  }, [isLessonActive, isPaused, currentStepIndex]);
 
-    return () => {
-      if (stepPacingTimerRef.current) clearInterval(stepPacingTimerRef.current);
-    };
-  }, [isLessonActive, isPaused]);
-
-  // Advance Step Manually
-  const handleNextStep = () => {
-    timeInCurrentStepRef.current = 0;
-    if (currentStepIndex < activeDiscipline.beginnerStepByStepPrep.length - 1) {
-      const nextIdx = currentStepIndex + 1;
-      setCurrentStepIndex(nextIdx);
-      const cleanText = formatCleanStepText(activeDiscipline.beginnerStepByStepPrep[nextIdx]);
-      const message = `Step ${nextIdx + 1}: ${cleanText}`;
-      setCurrentCoachSpeech(message);
-      speakCoachFeedback(message);
-    } else {
-      const message = `Full posture prep complete! Now holding full ${activeDiscipline.prescribedDrill} flow execution!`;
-      setCurrentCoachSpeech(message);
-      speakCoachFeedback(message);
-    }
-  };
-
-  // Push-to-Talk Recording Trigger - HARD SHUTDOWN COACH SPEECH INSTANTLY
+  // Push-to-Talk Recording Trigger
   const startAudioRecording = () => {
     if (!activeStream) return;
 
-    // HARD SHUTDOWN ALL SPEECH INSTANTLY
     stopCoachSpeaking();
     isCoachSpeakingRef.current = false;
     setIsRecordingAudio(true);
     isRecordingAudioRef.current = true;
-    timeInCurrentStepRef.current = 0;
 
     primeSpeechSynthesis();
     setHaloStatus('user_speaking');
     latestSpeechTranscriptRef.current = '';
 
     setupSpeechRecognition();
-    if (recognitionRef.current && !isRecognizingRef.current) {
+    if (recognitionRef.current) {
       try { recognitionRef.current.start(); } catch {}
     }
 
@@ -529,7 +481,6 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
       const userTranscript = data.userTranscript || localSpeechText || "What form do I use?";
 
       handleUserVoiceInput(userTranscript);
-      analyzeCameraFrameWithGeminiVision(userTranscript, false);
     } catch (err) {
       console.warn('Failed to send audio to Gemini endpoint:', err);
       handleUserVoiceInput(localSpeechText || "What form do I use?");
@@ -538,6 +489,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
 
   // Reset Session
   const resetSessionState = () => {
+    if (max10sStepTimerRef.current) clearInterval(max10sStepTimerRef.current);
     stopCoachSpeaking();
     isCoachSpeakingRef.current = false;
     setIsRecordingAudio(false);
@@ -545,7 +497,6 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     setIsLessonActive(false);
     setLessonSeconds(0);
     setCurrentStepIndex(0);
-    timeInCurrentStepRef.current = 0;
     setLastUserSpeech('');
     setCurrentCoachSpeech('');
     latestSpeechTranscriptRef.current = '';
@@ -553,6 +504,8 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     setConversations([]);
     setHaloStatus('ready');
     setMotionState('idle');
+    setStepHoldCountdown(null);
+    hasInspectedCurrentStepRef.current = false;
   };
 
   // Voice Activity Detection
@@ -567,7 +520,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     }
   }, [isLessonActive]);
 
-  // SINGLE VOICE Handler with Clean Formatting
+  // SINGLE VOICE Handler
   const handleUserVoiceInput = async (userInputText: string) => {
     if (!isLessonActive || !userInputText.trim()) return;
 
@@ -597,7 +550,6 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     if (advanceStep && currentStepIndex < activeDiscipline.beginnerStepByStepPrep.length - 1) {
       nextStep = currentStepIndex + 1;
       setCurrentStepIndex(nextStep);
-      timeInCurrentStepRef.current = 0;
     }
 
     setHaloStatus('coach_speaking');
@@ -633,14 +585,14 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     isLessonActiveRef.current = true;
 
     const step1 = formatCleanStepText(activeDiscipline.beginnerStepByStepPrep[0] || 'Place your feet 4 feet apart.');
-    const welcome = `Welcome to live ${activeDiscipline.name}! Step 1: ${step1} Move into position—I will inspect your camera posture when you settle!`;
+    const welcome = `Welcome to live ${activeDiscipline.name}! Step 1: ${step1} Move into pose—I will inspect your camera posture when you settle!`;
 
     setCurrentCoachSpeech(welcome);
     await speakCoachFeedback(welcome);
-    analyzeCameraFrameWithGeminiVision('', false);
   };
 
   const endPrivateLesson = () => {
+    if (max10sStepTimerRef.current) clearInterval(max10sStepTimerRef.current);
     stopCoachSpeaking();
     isCoachSpeakingRef.current = false;
     setIsLessonActive(false);
@@ -671,7 +623,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold tracking-wider text-emerald-400 uppercase flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" /> Motion-Settle Camera Engine Active
+                <Eye className="w-3.5 h-3.5 text-emerald-400 animate-pulse" /> Camera Feedback & Auto-Transition Engine Active
               </span>
               <span className="text-[10px] font-black uppercase bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded-full">
                 {skillLevel} Level
@@ -692,7 +644,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
             <button
               onClick={() => {
                 primeSpeechSynthesis();
-                analyzeCameraFrameWithGeminiVision("Check my posture", true);
+                analyzeCameraFrameWithGeminiVision("Inspect my posture");
               }}
               disabled={!isLessonActive}
               className="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 text-xs font-bold px-3 py-2 rounded-xl border border-emerald-800 flex items-center gap-1.5 transition disabled:opacity-50"
@@ -736,7 +688,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
           </div>
         </div>
 
-        {/* Current Step Pacing Card with Step Advancement Button */}
+        {/* Current Step Pacing Card with Step Advancement Button & Hold Countdown */}
         {isLessonActive && (
           <div className="bg-slate-850 p-3.5 rounded-xl border border-slate-800 space-y-2.5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
@@ -748,6 +700,12 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
               </span>
 
               <div className="flex items-center gap-2">
+                {stepHoldCountdown !== null && (
+                  <span className="text-xs bg-emerald-950 text-emerald-300 border border-emerald-700 px-2.5 py-1 rounded-full font-bold font-mono animate-pulse">
+                    ⏱️ Hold Practice: {stepHoldCountdown}s
+                  </span>
+                )}
+
                 <span className="font-mono text-emerald-400 font-bold">{formatTime(lessonSeconds)}</span>
                 <button
                   onClick={handleNextStep}
@@ -759,7 +717,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
             </div>
 
             <p className="text-[11px] text-slate-300 italic">
-              🏃 Move into position—when you settle into pose, Gemini 2.5 Flash automatically captures & inspects your joint alignment!
+              📸 Move into pose—Gemini 2.5 Flash inspects camera, gives feedback, and automatically transitions to the next pose after 10s practice!
             </p>
           </div>
         )}
@@ -782,23 +740,23 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
           </div>
         )}
 
-        {/* Motion Settle Status Badge Overlay */}
+        {/* Motion Settle Status Traffic Light Badge Overlay */}
         {isLessonActive && (
           <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
             <div className={`text-[11px] font-extrabold px-3 py-1.5 rounded-full border backdrop-blur-md flex items-center gap-1.5 shadow-lg ${
               motionState === 'moving'
-                ? 'bg-amber-950/90 text-amber-300 border-amber-700 animate-pulse'
+                ? 'bg-rose-950/90 text-rose-300 border-rose-700 animate-pulse'
                 : motionState === 'settled'
                 ? 'bg-emerald-950/90 text-emerald-300 border-emerald-700'
-                : 'bg-slate-900/80 text-slate-300 border-slate-700'
+                : 'bg-amber-950/80 text-amber-300 border-amber-700'
             }`}>
               <Activity className="w-3.5 h-3.5 shrink-0" />
               <span>
                 {motionState === 'moving'
-                  ? '🟡 Motion Detected... Move into Pose'
+                  ? '🔴 Movement Detected — Position Body'
                   : motionState === 'settled'
-                  ? '🟢 Pose Settled — Gemini Vision Capture'
-                  : '⚪ Ready in Position'}
+                  ? '🟢 Pose Settled — Gemini Vision Inspected'
+                  : '🟡 Settle into Position'}
               </span>
             </div>
           </div>
@@ -838,15 +796,15 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
           )}
         </div>
 
-        {/* Dynamic Gemini Vision Real Camera Inspection Card Overlay */}
+        {/* Dynamic Gemini Vision Real Camera Inspection Card Overlay with Score-Calibrated Color Badge */}
         {isLessonActive && activeVisionFeedback && (
           <div className="absolute top-16 left-4 max-w-sm z-10 bg-slate-950/95 backdrop-blur-md p-4 rounded-2xl border border-emerald-500/80 shadow-2xl space-y-2 animate-fade-in text-xs">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <span className="font-bold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
                 <Eye className="w-4 h-4 text-emerald-400 animate-pulse" /> Gemini 2.5 Flash Camera Inspection
               </span>
-              <span className="font-black text-xs text-slate-950 bg-emerald-400 px-2 py-0.5 rounded-full font-mono">
-                {activeVisionFeedback.alignmentScore} / 10 Pose Score
+              <span className={`font-black text-xs px-2.5 py-0.5 rounded-full font-mono border shadow ${getScoreColorBadge(activeVisionFeedback.alignmentScore)}`}>
+                {activeVisionFeedback.alignmentScore} / 10 Score
               </span>
             </div>
 
@@ -891,8 +849,8 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
       {isLessonActive && (
         <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 space-y-3">
           <div className="flex items-center justify-between text-xs text-slate-400 font-bold uppercase tracking-wider">
-            <span>🗣️ Push-to-Talk Microphone & Question Shortcuts:</span>
-            <span className="text-emerald-400 text-[10px] font-mono">Pixel-Delta Settle Engine Active</span>
+            <span>🗣️ Push-to-Talk Microphone & Camera Inspection:</span>
+            <span className="text-emerald-400 text-[10px] font-mono">Score Color Badge Active</span>
           </div>
 
           <div className="flex items-center gap-2">

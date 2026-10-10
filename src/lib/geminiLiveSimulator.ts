@@ -13,6 +13,8 @@ export interface ConversationalExchange {
 
 let globalAudioContext: AudioContext | null = null;
 let currentSourceNode: AudioBufferSourceNode | null = null;
+let activeAudioElement: HTMLAudioElement | null = null;
+let latestSpeechId = 0; // Monotonic speech sequence guard
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
@@ -37,16 +39,29 @@ export function primeSpeechSynthesis(): void {
   }
 }
 
-// HARD STOP ANY PLAYING AUDIO INSTANTLY (100% Guaranteed Single Voice)
+// HARD STOP ANY PLAYING AUDIO INSTANTLY (100% Guaranteed Single Sentence)
 export function stopCoachSpeaking(): void {
+  latestSpeechId = Date.now(); // Invalidate any older pending speech promises!
+
+  // Terminate Web Audio Source Node
   if (currentSourceNode) {
     try {
-      currentSourceNode.stop();
+      currentSourceNode.stop(0);
       currentSourceNode.disconnect();
     } catch (e) {}
     currentSourceNode = null;
   }
 
+  // Terminate HTML5 Audio Element
+  if (activeAudioElement) {
+    try {
+      activeAudioElement.pause();
+      activeAudioElement.currentTime = 0;
+    } catch (e) {}
+    activeAudioElement = null;
+  }
+
+  // Terminate SpeechSynthesis
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     try {
       window.speechSynthesis.cancel();
@@ -54,27 +69,54 @@ export function stopCoachSpeaking(): void {
   }
 }
 
-// Server-Side TTS Proxy over Web Audio Context (Strict Single Audio Lock)
+// Latest-Only Speech Engine (Discards any older queued sentences!)
 export async function speakCoachFeedback(text: string, onStart?: () => void, onEnd?: () => void): Promise<void> {
   if (typeof window === 'undefined' || !text.trim()) {
     if (onEnd) onEnd();
     return;
   }
 
+  // 1. Assign unique monotonic speech ID for this call
+  const thisSpeechId = Date.now() + Math.random();
+  latestSpeechId = thisSpeechId;
+
+  // 2. Hard stop any previous audio playing
   stopCoachSpeaking();
+  latestSpeechId = thisSpeechId; // Restore current ID as active
 
   const ctx = getAudioContext();
 
   if (ctx) {
     try {
-      const cleanText = text.slice(0, 180);
+      const cleanText = text.slice(0, 160);
       const ttsUrl = `/api/tts?text=${encodeURIComponent(cleanText)}`;
       
       const response = await fetch(ttsUrl);
+      
+      // Guard: Discard if a newer speech request came in while fetching!
+      if (latestSpeechId !== thisSpeechId) {
+        if (onEnd) onEnd();
+        return;
+      }
+
       const arrayBuffer = await response.arrayBuffer();
+
+      if (latestSpeechId !== thisSpeechId) {
+        if (onEnd) onEnd();
+        return;
+      }
+
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
 
-      stopCoachSpeaking();
+      if (latestSpeechId !== thisSpeechId) {
+        if (onEnd) onEnd();
+        return;
+      }
+
+      // Hard stop again right before connecting to audio context destination
+      if (currentSourceNode) {
+        try { currentSourceNode.stop(0); currentSourceNode.disconnect(); } catch (e) {}
+      }
 
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
@@ -84,7 +126,7 @@ export async function speakCoachFeedback(text: string, onStart?: () => void, onE
 
       if (onStart) onStart();
 
-      return new Promise((resolve) => {
+      return new Promise<void>((resolve) => {
         let isDone = false;
         const finish = () => {
           if (!isDone) {
@@ -98,23 +140,24 @@ export async function speakCoachFeedback(text: string, onStart?: () => void, onE
         source.onended = finish;
         source.start(0);
 
-        setTimeout(finish, 6000);
+        // Safety timeout (4.5s)
+        setTimeout(finish, 4500);
       });
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Server TTS proxy decode error:', err);
     }
   }
 
   // SpeechSynthesis Fallback
-  return new Promise((resolve) => {
-    if ('speechSynthesis' in window) {
-      try {
-        window.speechSynthesis.resume();
-        window.speechSynthesis.cancel();
+  if ('speechSynthesis' in window && latestSpeechId === thisSpeechId) {
+    try {
+      window.speechSynthesis.resume();
+      window.speechSynthesis.cancel();
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.0;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
 
+      await new Promise<void>((resolve) => {
         let isDone = false;
         const finish = () => {
           if (!isDone) {
@@ -129,16 +172,16 @@ export async function speakCoachFeedback(text: string, onStart?: () => void, onE
         utterance.onerror = finish;
 
         window.speechSynthesis.speak(utterance);
-        setTimeout(finish, 5000);
-        return;
-      } catch (e) {}
-    }
-    if (onEnd) onEnd();
-    resolve();
-  });
+        setTimeout(finish, 4000);
+      });
+
+      return;
+    } catch (e) {}
+  }
+
+  if (onEnd) onEnd();
 }
 
-// Universal Question Answering & Direct Acknowledgment Engine
 export function generateCoachResponseToUserSpeech(
   userInput: string,
   discipline: Discipline,
@@ -147,8 +190,8 @@ export function generateCoachResponseToUserSpeech(
 ): { responseText: string; advanceStep: boolean } {
   const textLower = userInput.toLowerCase();
 
-  // 1. Explicit Step Advancement ("next step", "ready", "move on", "advance")
-  if (textLower.includes('next step') || textLower.includes('move on') || textLower.includes('ready') || textLower.includes('advance')) {
+  // 1. Explicit Step Advancement ONLY on explicit phrase ("next step", "ready for step", "advance step")
+  if (textLower.includes('next step') || textLower.includes('advance step') || textLower.includes('move on to step')) {
     const nextStepNum = Math.min(discipline.beginnerStepByStepPrep.length, currentStepIndex + 2);
     const nextStepText = discipline.beginnerStepByStepPrep[currentStepIndex + 1] || 'Hold posture steady and breathe deeply.';
     return {
@@ -157,7 +200,7 @@ export function generateCoachResponseToUserSpeech(
     };
   }
 
-  // 2. Other Sports / Discipline Questions ("do you know pilates", "can you coach tennis")
+  // 2. Other Sports / Discipline Questions
   if (textLower.includes('pilates') || textLower.includes('tennis') || textLower.includes('golf') || textLower.includes('cooking') || textLower.includes('other sport')) {
     return {
       responseText: `Yes! I coach Yoga, Tennis, Golf, Cooking, and Pilates. You can switch anytime using the Sport button in the header.`,
@@ -165,8 +208,8 @@ export function generateCoachResponseToUserSpeech(
     };
   }
 
-  // 3. Pose / Drill Name Questions ("what pose is this", "name of the pose", "what are we doing")
-  if (textLower.includes('name') || textLower.includes('what pose') || textLower.includes('which pose') || textLower.includes('what drill') || textLower.includes('what are we doing') || textLower.includes('doing right now') || textLower.includes('what is this')) {
+  // 3. Pose / Drill Name Questions
+  if (textLower.includes('name') || textLower.includes('what pose') || textLower.includes('which pose') || textLower.includes('what drill') || textLower.includes('what are we doing') || textLower.includes('what is this')) {
     const currentStepText = discipline.beginnerStepByStepPrep[currentStepIndex] || 'Setup posture and balance.';
     return {
       responseText: `We are practicing ${discipline.name}, specifically ${discipline.prescribedDrill}! Step ${currentStepIndex + 1}: ${currentStepText}`,
