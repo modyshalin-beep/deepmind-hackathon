@@ -1,10 +1,65 @@
-import { VideoClip, CoachProfile, SessionReport } from '@/types';
+import { VideoClip, CoachProfile, SessionReport, UserAccount } from '@/types';
 import { INITIAL_COACH_PROFILE, INITIAL_VIDEO_CLIPS, INITIAL_SESSIONS } from './mockData';
 
 const PROFILE_KEY = 'pocket_coach_profile_v1';
 const CLIPS_KEY = 'pocket_coach_clips_v1';
 const SESSIONS_KEY = 'pocket_coach_sessions_v1';
+const CURRENT_USER_KEY = 'pocket_coach_current_user_v1';
+const USERS_KEY = 'pocket_coach_registered_users_v1';
 const MAX_STORAGE_MB = 1024; // 1 GB simulated storage cap
+
+export const DEMO_USER: UserAccount = {
+  id: 'usr-demo-1',
+  name: 'Alex Rivera',
+  email: 'alex@pocketcoach.ai',
+  skillLevel: 'beginner',
+  primaryDisciplineId: 'yoga',
+  createdAt: '2026-09-01T08:00:00Z',
+};
+
+export function loadCurrentUser(): UserAccount | null {
+  if (typeof window === 'undefined') return DEMO_USER;
+  try {
+    const raw = localStorage.getItem(CURRENT_USER_KEY);
+    if (!raw) return DEMO_USER;
+    return JSON.parse(raw);
+  } catch {
+    return DEMO_USER;
+  }
+}
+
+export function saveCurrentUser(user: UserAccount | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!user) {
+      localStorage.removeItem(CURRENT_USER_KEY);
+    } else {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+    }
+  } catch (err) {
+    console.error('Failed to save current user', err);
+  }
+}
+
+export function loadRegisteredUsers(): UserAccount[] {
+  if (typeof window === 'undefined') return [DEMO_USER];
+  try {
+    const raw = localStorage.getItem(USERS_KEY);
+    if (!raw) return [DEMO_USER];
+    return JSON.parse(raw);
+  } catch {
+    return [DEMO_USER];
+  }
+}
+
+export function saveRegisteredUsers(users: UserAccount[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  } catch (err) {
+    console.error('Failed to save registered users', err);
+  }
+}
 
 export function loadCoachProfile(): CoachProfile {
   if (typeof window === 'undefined') return INITIAL_COACH_PROFILE;

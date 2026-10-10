@@ -98,3 +98,12 @@ export interface LocalMatchPartner {
   recentBreakthrough: string;
   badge: string;
 }
+
+export interface UserAccount {
+  id: string;
+  name: string;
+  email: string;
+  skillLevel?: SkillLevel;
+  primaryDisciplineId?: string;
+  createdAt: string;
+}

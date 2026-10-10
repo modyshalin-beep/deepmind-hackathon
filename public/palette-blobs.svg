@@ -1,0 +1,186 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 860" width="1000" height="860">
+  <defs>
+    <style>
+      .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 900; fill: #FFFFFF; font-size: 24px; letter-spacing: -0.5px; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 500; fill: #94A3B8; font-size: 13px; }
+      .palette-name { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 800; fill: #FFFFFF; font-size: 16px; }
+      .palette-desc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 500; fill: #94A3B8; font-size: 12px; }
+      .color-label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 700; fill: #E2E8F0; font-size: 11px; }
+      .hex-label { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 600; fill: #94A3B8; font-size: 10px; }
+    </style>
+    <!-- Filters for soft blob shadows -->
+    <filter id="blob-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.45" />
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1000" height="860" fill="#080A0E" rx="24" />
+
+  <!-- Header -->
+  <text x="50" y="55" class="title">Pocket Coach — Learning Color Palettes</text>
+  <text x="50" y="80" class="subtitle">Curated editorial &amp; cognitive visual themes inspired by Imprint, Brilliant, MasterClass &amp; Blinkist</text>
+
+  <!-- ================= PALETTE 1: IMPRINT ================= -->
+  <g transform="translate(50, 115)">
+    <!-- Palette Card Backdrop -->
+    <rect width="900" height="155" rx="20" fill="#0D1322" stroke="#26334D" stroke-width="1.5" />
+    <text x="30" y="36" class="palette-name">1. The Imprint Signature (Midnight Lapis &amp; Warm Saffron)</text>
+    <text x="30" y="54" class="palette-desc">Illustrated editorial book feel • Warm cognitive curiosity • High contrast without eye fatigue</text>
+    
+    <!-- Blobs -->
+    <!-- Blob 1: Canvas -->
+    <g transform="translate(40, 72)">
+      <circle cx="28" cy="28" r="26" fill="#0D1322" stroke="#3A4D6B" stroke-width="2" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Canvas Navy</text>
+      <text x="70" y="40" class="hex-label">#0D1322</text>
+    </g>
+    <!-- Blob 2: Surface -->
+    <g transform="translate(190, 72)">
+      <circle cx="28" cy="28" r="26" fill="#172033" stroke="#26334D" stroke-width="1.5" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Surface Slate</text>
+      <text x="70" y="40" class="hex-label">#172033</text>
+    </g>
+    <!-- Blob 3: Saffron Gold -->
+    <g transform="translate(340, 72)">
+      <circle cx="28" cy="28" r="26" fill="#FFAE03" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Saffron Gold</text>
+      <text x="70" y="40" class="hex-label">#FFAE03</text>
+    </g>
+    <!-- Blob 4: Tangerine -->
+    <g transform="translate(490, 72)">
+      <circle cx="28" cy="28" r="26" fill="#FF6B35" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Tangerine CTA</text>
+      <text x="70" y="40" class="hex-label">#FF6B35</text>
+    </g>
+    <!-- Blob 5: Royal Blue -->
+    <g transform="translate(640, 72)">
+      <circle cx="28" cy="28" r="26" fill="#3A86FF" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Royal Audio</text>
+      <text x="70" y="40" class="hex-label">#3A86FF</text>
+    </g>
+    <!-- Blob 6: Parchment -->
+    <g transform="translate(775, 72)">
+      <circle cx="28" cy="28" r="26" fill="#F5F2EB" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Parchment</text>
+      <text x="70" y="40" class="hex-label">#F5F2EB</text>
+    </g>
+  </g>
+
+  <!-- ================= PALETTE 2: BRILLIANT ================= -->
+  <g transform="translate(50, 295)">
+    <rect width="900" height="155" rx="20" fill="#0E121A" stroke="#232E40" stroke-width="1.5" />
+    <text x="30" y="36" class="palette-name">2. Brilliant Polymath (Deep Charcoal, Goldenrod &amp; Violet)</text>
+    <text x="30" y="54" class="palette-desc">Scientific &amp; deliberate practice • Logic breakdown • Violet mastery progression</text>
+    
+    <!-- Blobs -->
+    <g transform="translate(40, 72)">
+      <circle cx="28" cy="28" r="26" fill="#0E121A" stroke="#334155" stroke-width="2" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Charcoal Base</text>
+      <text x="70" y="40" class="hex-label">#0E121A</text>
+    </g>
+    <g transform="translate(190, 72)">
+      <circle cx="28" cy="28" r="26" fill="#161D29" stroke="#232E40" stroke-width="1.5" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Card Module</text>
+      <text x="70" y="40" class="hex-label">#161D29</text>
+    </g>
+    <g transform="translate(340, 72)">
+      <circle cx="28" cy="28" r="26" fill="#F59E0B" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Goldenrod</text>
+      <text x="70" y="40" class="hex-label">#F59E0B</text>
+    </g>
+    <g transform="translate(490, 72)">
+      <circle cx="28" cy="28" r="26" fill="#8B5CF6" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Mastery Violet</text>
+      <text x="70" y="40" class="hex-label">#8B5CF6</text>
+    </g>
+    <g transform="translate(640, 72)">
+      <circle cx="28" cy="28" r="26" fill="#10B981" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Valid Emerald</text>
+      <text x="70" y="40" class="hex-label">#10B981</text>
+    </g>
+    <g transform="translate(775, 72)">
+      <circle cx="28" cy="28" r="26" fill="#F8FAFC" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Crisp Chalk</text>
+      <text x="70" y="40" class="hex-label">#F8FAFC</text>
+    </g>
+  </g>
+
+  <!-- ================= PALETTE 3: MASTERCLASS ================= -->
+  <g transform="translate(50, 475)">
+    <rect width="900" height="155" rx="20" fill="#0F0E0D" stroke="#2E2A25" stroke-width="1.5" />
+    <text x="30" y="36" class="palette-name">3. MasterClass Studio (Espresso, Warm Ochre &amp; Editorial Cream)</text>
+    <text x="30" y="54" class="palette-desc">High-production atelier tutorial • Warm tactile woodcut • Ideal for yoga &amp; culinary practice</text>
+    
+    <!-- Blobs -->
+    <g transform="translate(40, 72)">
+      <circle cx="28" cy="28" r="26" fill="#0F0E0D" stroke="#443D35" stroke-width="2" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Deep Espresso</text>
+      <text x="70" y="40" class="hex-label">#0F0E0D</text>
+    </g>
+    <g transform="translate(190, 72)">
+      <circle cx="28" cy="28" r="26" fill="#191816" stroke="#2E2A25" stroke-width="1.5" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Atelier Card</text>
+      <text x="70" y="40" class="hex-label">#191816</text>
+    </g>
+    <g transform="translate(340, 72)">
+      <circle cx="28" cy="28" r="26" fill="#E5A93C" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Warm Ochre</text>
+      <text x="70" y="40" class="hex-label">#E5A93C</text>
+    </g>
+    <g transform="translate(490, 72)">
+      <circle cx="28" cy="28" r="26" fill="#D97706" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Amber Core</text>
+      <text x="70" y="40" class="hex-label">#D97706</text>
+    </g>
+    <g transform="translate(640, 72)">
+      <circle cx="28" cy="28" r="26" fill="#6EE7B7" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Studio Sage</text>
+      <text x="70" y="40" class="hex-label">#6EE7B7</text>
+    </g>
+    <g transform="translate(775, 72)">
+      <circle cx="28" cy="28" r="26" fill="#FAF6F0" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Cream Paper</text>
+      <text x="70" y="40" class="hex-label">#FAF6F0</text>
+    </g>
+  </g>
+
+  <!-- ================= PALETTE 4: BLINKIST ================= -->
+  <g transform="translate(50, 655)">
+    <rect width="900" height="155" rx="20" fill="#0B0F17" stroke="#212C3F" stroke-width="1.5" />
+    <text x="30" y="36" class="palette-name">4. Blinkist Focus (Nocturnal Ink, Electric Coral &amp; Seafoam)</text>
+    <text x="30" y="54" class="palette-desc">Micro-learning &amp; rapid synthesis • Calm comprehension • High readability</text>
+    
+    <!-- Blobs -->
+    <g transform="translate(40, 72)">
+      <circle cx="28" cy="28" r="26" fill="#0B0F17" stroke="#2C3B52" stroke-width="2" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Nocturnal Ink</text>
+      <text x="70" y="40" class="hex-label">#0B0F17</text>
+    </g>
+    <g transform="translate(190, 72)">
+      <circle cx="28" cy="28" r="26" fill="#141C2B" stroke="#212C3F" stroke-width="1.5" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Reading Card</text>
+      <text x="70" y="40" class="hex-label">#141C2B</text>
+    </g>
+    <g transform="translate(340, 72)">
+      <circle cx="28" cy="28" r="26" fill="#FF5C5C" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Electric Coral</text>
+      <text x="70" y="40" class="hex-label">#FF5C5C</text>
+    </g>
+    <g transform="translate(490, 72)">
+      <circle cx="28" cy="28" r="26" fill="#2DD4BF" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Mint Seafoam</text>
+      <text x="70" y="40" class="hex-label">#2DD4BF</text>
+    </g>
+    <g transform="translate(640, 72)">
+      <circle cx="28" cy="28" r="26" fill="#60A5FA" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">Sky Focus</text>
+      <text x="70" y="40" class="hex-label">#60A5FA</text>
+    </g>
+    <g transform="translate(775, 72)">
+      <circle cx="28" cy="28" r="26" fill="#F1F5F9" filter="url(#blob-shadow)" />
+      <text x="70" y="24" class="color-label">White Paper</text>
+      <text x="70" y="40" class="hex-label">#F1F5F9</text>
+    </g>
+  </g>
+</svg>

@@ -19,7 +19,7 @@ export function BottomTabs({ activeTab, onChangeTab, unreadClipsCount }: BottomT
   ];
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-slate-950/90 backdrop-blur-2xl border-t border-slate-800 px-3 py-2">
+    <nav className="fixed bottom-0 inset-x-0 z-40 bg-[#F2F8FC]/95 backdrop-blur-2xl border-t border-[#D0E6FF] px-3 py-2 shadow-sm">
       <div className="max-w-lg mx-auto flex items-center justify-around">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -28,19 +28,19 @@ export function BottomTabs({ activeTab, onChangeTab, unreadClipsCount }: BottomT
             <button
               key={tab.id}
               onClick={() => onChangeTab(tab.id)}
-              className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all relative ${
+              className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all relative cursor-pointer ${
                 isActive
-                  ? 'text-emerald-400 font-bold scale-105'
-                  : 'text-slate-400 hover:text-slate-200 font-medium'
+                  ? 'text-[#FF7F2D] font-bold scale-105'
+                  : 'text-[#4A4B4B] hover:text-[#2D2E2E] font-medium'
               }`}
             >
-              <div className={`p-1.5 rounded-xl ${isActive ? 'bg-emerald-950/80 border border-emerald-800' : ''}`}>
+              <div className={`p-1.5 rounded-xl ${isActive ? 'bg-[#FEF6F4] border border-[#FF7F2D]/40 text-[#FF7F2D]' : ''}`}>
                 <Icon className="w-5 h-5" />
               </div>
               <span className="text-[10px] tracking-tight">{tab.label}</span>
 
               {tab.badge && tab.badge > 0 ? (
-                <span className="absolute top-1 right-2 bg-emerald-500 text-slate-950 text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="absolute top-1 right-2 bg-[#FF7F2D] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
                   {tab.badge}
                 </span>
               ) : null}

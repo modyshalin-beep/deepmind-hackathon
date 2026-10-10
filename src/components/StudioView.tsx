@@ -274,18 +274,18 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
   return (
     <div className="flex flex-col gap-4 pb-24">
       {/* 2-Way Conversational Header Banner */}
-      <div className="bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800 p-4 shadow-xl">
+      <div className="bg-white rounded-2xl border border-[#E6E0D4] p-4 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold tracking-wider text-emerald-400 uppercase flex items-center gap-1.5">
+              <span className="text-xs font-bold tracking-wider text-[#C2410C] uppercase flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" /> Interactive Video & Audio Channel Active
               </span>
-              <span className="text-[10px] font-black uppercase bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-black uppercase bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] px-2 py-0.5 rounded-full">
                 {skillLevel} Level
               </span>
             </div>
-            <h2 className="text-lg font-bold text-white mt-0.5">{activeDiscipline.prescribedDrill}</h2>
+            <h2 className="text-lg font-bold text-[#182030] mt-0.5">{activeDiscipline.prescribedDrill}</h2>
           </div>
 
           {/* Microphone Selector & Settings */}
@@ -298,7 +298,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
                   startCameraStream(e.target.value);
                 }}
                 disabled={isLessonActive}
-                className="bg-slate-800 text-emerald-300 text-xs font-semibold rounded-xl px-2.5 py-2 border border-slate-700 focus:outline-none disabled:opacity-50"
+                className="bg-[#F4EFE6] text-[#182030] text-xs font-semibold rounded-xl px-2.5 py-2 border border-[#E6E0D4] focus:outline-none disabled:opacity-50"
               >
                 {audioDevices.map(d => (
                   <option key={d.deviceId} value={d.deviceId}>
@@ -311,35 +311,35 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
             <button
               onClick={onOpenOnboarding}
               disabled={isLessonActive}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 flex items-center gap-1.5 transition disabled:opacity-50"
+              className="bg-[#F4EFE6] hover:bg-[#E6E0D4] text-[#182030] text-xs font-bold px-3 py-2 rounded-xl border border-[#E6E0D4] flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
             >
-              <Settings className="w-3.5 h-3.5 text-emerald-400" /> Sport / Level
+              <Settings className="w-3.5 h-3.5 text-[#C2410C]" /> Sport / Level
             </button>
           </div>
         </div>
 
         {/* Current Step Pacing Card */}
         {isLessonActive && (
-          <div className="bg-slate-850 p-3 rounded-xl border border-slate-800 space-y-2">
+          <div className="bg-[#F4EFE6] p-3 rounded-xl border border-[#E6E0D4] space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-white flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-                Step {currentStepIndex + 1} of {activeDiscipline.beginnerStepByStepPrep.length}: <strong className="text-emerald-400 font-mono">
+              <span className="font-bold text-[#182030] flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-[#C2410C]" />
+                Step {currentStepIndex + 1} of {activeDiscipline.beginnerStepByStepPrep.length}: <strong className="text-[#C2410C] font-mono">
                   {activeDiscipline.beginnerStepByStepPrep[currentStepIndex]}
                 </strong>
               </span>
-              <span className="font-mono text-emerald-400 font-bold">{formatTime(lessonSeconds)}</span>
+              <span className="font-mono text-[#1D4ED8] font-bold">{formatTime(lessonSeconds)}</span>
             </div>
 
-            <p className="text-[11px] text-slate-300 italic">
-              👉 Speak into mic! Say <strong className="text-emerald-300">&quot;Ready&quot;</strong>, <strong className="text-emerald-300">&quot;What is this?&quot;</strong>, or <strong className="text-emerald-300">&quot;Wait&quot;</strong> in your AirPods.
+            <p className="text-[11px] text-[#5A6578] italic">
+              👉 Speak into mic! Say <strong className="text-[#C2410C]">&quot;Ready&quot;</strong>, <strong className="text-[#1D4ED8]">&quot;What is this?&quot;</strong>, or <strong className="text-[#D97706]">&quot;Wait&quot;</strong> in your AirPods.
             </p>
           </div>
         )}
       </div>
 
       {/* Main Viewfinder / Camera HUD */}
-      <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl flex items-center justify-center">
+      <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] bg-[#182030] rounded-2xl overflow-hidden border border-[#E6E0D4] shadow-lg flex items-center justify-center">
         {cameraPermissionGranted !== false ? (
           <video
             ref={videoRef}
@@ -349,8 +349,8 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
             className="w-full h-full object-cover transform -scale-x-100"
           />
         ) : (
-          <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400">
-            <Camera className="w-12 h-12 mb-2 text-slate-600" />
+          <div className="flex flex-col items-center justify-center p-6 text-center text-slate-300">
+            <Camera className="w-12 h-12 mb-2 text-slate-400" />
             <p className="text-sm font-medium">Camera preview active (VAD Soundwave Active)</p>
           </div>
         )}
@@ -358,12 +358,12 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
         {/* Halo Border Overlay (Clean, no flickering) */}
         <div className={`absolute inset-0 pointer-events-none rounded-2xl border-4 transition-all duration-300 ${
           haloStatus === 'user_speaking'
-            ? 'border-emerald-400 shadow-[inset_0_0_50px_rgba(16,185,129,0.6)]'
+            ? 'border-[#C2410C] shadow-[inset_0_0_50px_rgba(194,65,12,0.5)]'
             : haloStatus === 'coach_speaking'
-            ? 'border-cyan-400 shadow-[inset_0_0_40px_rgba(6,182,212,0.4)]'
+            ? 'border-[#D97706] shadow-[inset_0_0_40px_rgba(217,119,6,0.5)]'
             : isLessonActive
-            ? 'border-emerald-500/70 shadow-[inset_0_0_30px_rgba(16,185,129,0.2)]'
-            : 'border-slate-800'
+            ? 'border-[#C2410C]/70 shadow-[inset_0_0_30px_rgba(194,65,12,0.2)]'
+            : 'border-white/10'
         }`} />
 
         {/* Live Soundwave Audio Channel Header */}
@@ -376,7 +376,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
           />
 
           {haloStatus === 'coach_speaking' && (
-            <span className="bg-cyan-500 text-slate-950 text-xs font-bold px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+            <span className="bg-[#D97706] text-white text-xs font-black px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
               <Volume2 className="w-3.5 h-3.5" /> Coach Speaking
             </span>
           )}
@@ -384,12 +384,12 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
 
         {/* Dynamic AI Visual Reaction Overlay on Video Feed */}
         {isLessonActive && activeVisualReaction && (
-          <div className="absolute top-16 left-4 max-w-xs z-10 bg-slate-950/90 backdrop-blur-md p-3.5 rounded-2xl border border-emerald-500/80 shadow-2xl space-y-1.5 animate-fade-in">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+          <div className="absolute top-16 left-4 max-w-xs z-10 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl border border-[#D97706] shadow-xl space-y-1.5 animate-fade-in text-[#182030]">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[#C2410C]">
               <Eye className="w-4 h-4 animate-pulse" />
               <span>{activeVisualReaction.title}</span>
             </div>
-            <p className="text-[11px] text-slate-200 leading-snug">
+            <p className="text-[11px] text-[#5A6578] leading-snug">
               {activeVisualReaction.detail}
             </p>
           </div>
@@ -398,14 +398,14 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
         {/* Live Subtitles Banner */}
         {currentCoachSpeech && (
           <div className="absolute bottom-4 inset-x-6 z-10">
-            <div className="bg-slate-950/90 text-white text-xs sm:text-sm font-medium px-4 py-3 rounded-xl border border-slate-700 backdrop-blur-md shadow-xl text-center space-y-1">
+            <div className="bg-white/95 text-[#182030] text-xs sm:text-sm font-medium px-4 py-3 rounded-xl border border-[#E6E0D4] backdrop-blur-md shadow-xl text-center space-y-1">
               {lastUserSpeech && (
-                <p className="text-[11px] text-emerald-300 italic font-mono">
+                <p className="text-[11px] text-[#1D4ED8] italic font-mono">
                   🗣️ Student: &quot;{lastUserSpeech}&quot;
                 </p>
               )}
-              <p className="text-slate-100 font-bold">
-                🎙️ <strong className="text-emerald-400">{activeDiscipline.coachPersona.name}:</strong> &quot;{currentCoachSpeech}&quot;
+              <p className="text-[#182030] font-bold">
+                🎙️ <strong className="text-[#C2410C]">{activeDiscipline.coachPersona.name}:</strong> &quot;{currentCoachSpeech}&quot;
               </p>
             </div>
           </div>
@@ -414,55 +414,55 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
 
       {/* Interactive Quick Voice Input Triggers for Testing */}
       {isLessonActive && (
-        <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 space-y-2">
-          <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider block">
+        <div className="bg-white p-3.5 rounded-2xl border border-[#E6E0D4] space-y-2 shadow-xs">
+          <span className="text-[11px] text-[#5A6578] font-bold uppercase tracking-wider block">
             🗣️ Speak into AirPods (or tap quick voice shortcuts to test video reactions):
           </span>
 
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => handleUserVoiceInput("What is this pose?")}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs py-2 px-3 rounded-xl border border-slate-700 flex items-center gap-1.5 transition"
+              className="bg-[#F4EFE6] hover:bg-[#E6E0D4] text-[#182030] text-xs py-2 px-3 rounded-xl border border-[#E6E0D4] flex items-center gap-1.5 transition cursor-pointer"
             >
-              <HelpCircle className="w-3.5 h-3.5 text-cyan-400" /> &quot;What is this posture?&quot;
+              <HelpCircle className="w-3.5 h-3.5 text-[#1D4ED8]" /> &quot;What is this posture?&quot;
             </button>
 
             <button
               onClick={() => handleUserVoiceInput("Wait, hold on a second")}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs py-2 px-3 rounded-xl border border-slate-700 flex items-center gap-1.5 transition"
+              className="bg-[#F4EFE6] hover:bg-[#E6E0D4] text-[#182030] text-xs py-2 px-3 rounded-xl border border-[#E6E0D4] flex items-center gap-1.5 transition cursor-pointer"
             >
-              <Pause className="w-3.5 h-3.5 text-amber-400" /> &quot;Wait, hold on!&quot;
+              <Pause className="w-3.5 h-3.5 text-[#D97706]" /> &quot;Wait, hold on!&quot;
             </button>
 
             <button
               onClick={() => handleUserVoiceInput("Ready! Next step")}
-              className="bg-emerald-950 hover:bg-emerald-900 text-emerald-300 text-xs font-bold py-2 px-3 rounded-xl border border-emerald-800 flex items-center gap-1.5 transition"
+              className="bg-[#FFEDD5] hover:bg-[#FED7AA] text-[#C2410C] text-xs font-bold py-2 px-3 rounded-xl border border-[#FDBA74] flex items-center gap-1.5 transition cursor-pointer"
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> &quot;Ready for next step!&quot;
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#C2410C]" /> &quot;Ready for next step!&quot;
             </button>
           </div>
         </div>
       )}
 
       {/* Main Action Control */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900 p-4 rounded-2xl border border-slate-800">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-[#E6E0D4] shadow-xs">
         {!isLessonActive ? (
           <button
             onClick={startPrivateLesson}
-            className="w-full flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-base py-4 px-6 rounded-xl shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 transition-all"
+            className="w-full flex-1 bg-[#C2410C] hover:bg-[#9a3412] text-white font-black text-base py-4 px-6 rounded-xl shadow-md shadow-[#C2410C]/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <Play className="w-5 h-5 fill-current" /> Start Two-Way Live Lesson
           </button>
         ) : (
           <div className="w-full flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs text-emerald-400 font-bold bg-emerald-950/80 px-3 py-2.5 rounded-xl border border-emerald-800">
-              <Mic className="w-4 h-4 text-emerald-400" />
+            <div className="flex items-center gap-2 text-xs text-[#92400E] font-bold bg-[#FEF3C7] px-3 py-2.5 rounded-xl border border-[#FDE68A]">
+              <Mic className="w-4 h-4 text-[#C2410C]" />
               Student Mic Active (VAD Echo Filter On)
             </div>
 
             <button
               onClick={endPrivateLesson}
-              className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-md flex items-center justify-center gap-1.5"
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Square className="w-4 h-4 fill-current" /> End Lesson
             </button>
@@ -472,25 +472,25 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
 
       {/* Post Session Summary Modal */}
       {completedReport && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white border border-[#E6E0D4] rounded-2xl max-w-lg w-full p-6 shadow-2xl flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#E6E0D4] pb-3">
               <div className="flex items-center gap-2">
-                <Award className="w-6 h-6 text-emerald-400" />
-                <h3 className="text-lg font-bold text-white">Interactive Lesson Film Study</h3>
+                <Award className="w-6 h-6 text-[#C2410C]" />
+                <h3 className="text-lg font-bold text-[#182030]">Interactive Lesson Film Study</h3>
               </div>
-              <span className="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-2.5 py-1 rounded-full font-bold">
+              <span className="text-xs bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] px-2.5 py-1 rounded-full font-bold">
                 Score: {completedReport.overallScore} (+{completedReport.scoreChange})
               </span>
             </div>
 
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-[#5A6578]">
               {completedReport.coachSummary}
             </p>
 
-            <div className="bg-slate-800/60 rounded-xl p-3 border border-slate-700/80">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Lesson Highlights</span>
-              <ul className="text-xs text-slate-200 space-y-1.5 list-disc pl-4">
+            <div className="bg-[#F4EFE6] rounded-xl p-3 border border-[#E6E0D4]">
+              <span className="text-xs font-bold text-[#5A6578] uppercase tracking-wider block mb-2">Lesson Highlights</span>
+              <ul className="text-xs text-[#182030] space-y-1.5 list-disc pl-4">
                 {completedReport.keyTakeaways.map((t, idx) => (
                   <li key={idx}>{t}</li>
                 ))}
@@ -500,7 +500,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
             <div className="flex gap-2 justify-end pt-2">
               <button
                 onClick={() => setCompletedReport(null)}
-                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm py-2.5 px-5 rounded-xl flex items-center gap-2"
+                className="bg-[#C2410C] hover:bg-[#9a3412] text-white font-black text-sm py-2.5 px-5 rounded-xl flex items-center gap-2 cursor-pointer shadow-md shadow-[#C2410C]/25"
               >
                 Review Milestone Film Clips <ArrowRight className="w-4 h-4" />
               </button>

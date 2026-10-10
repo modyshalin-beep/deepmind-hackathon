@@ -126,7 +126,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
+    <div className="min-h-screen bg-[#F2F8FC] text-[#4A4B4B] flex flex-col font-sans selection:bg-[#D0E6FF] selection:text-[#4A4B4B]">
       {/* Top Navigation Header */}
       <HeaderNav coachProfile={coachProfile} activeTab={activeTab} />
 

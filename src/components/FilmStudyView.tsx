@@ -3,8 +3,7 @@
 import React, { useState } from 'react';
 import { VideoClip, Discipline } from '@/types';
 import { shareVideoOrCard } from '@/lib/webShare';
-import { calculateStorageUsage, pruneNonMilestoneClips } from '@/lib/storage';
-import { Play, Pause, Share2, Lock, Unlock, HardDrive, Trash2, Tag, CheckCircle2, AlertTriangle, Info, Sparkles, Download } from 'lucide-react';
+import { Share2, Lock, Unlock, Play, Sparkles, HardDrive, Trash2 } from 'lucide-react';
 
 interface FilmStudyViewProps {
   clips: VideoClip[];
@@ -15,28 +14,27 @@ interface FilmStudyViewProps {
 
 export function FilmStudyView({ clips, disciplines, onToggleMilestone, onPruneClips }: FilmStudyViewProps) {
   const [selectedClipId, setSelectedClipId] = useState<string>(clips[0]?.id || '');
-  const [isPlaying, setIsPlaying] = useState(false);
   const [shareStatusText, setShareStatusText] = useState<string | null>(null);
 
   const selectedClip = clips.find(c => c.id === selectedClipId) || clips[0];
-  const storageStats = calculateStorageUsage(clips);
+
+  const totalStorageUsedMB = clips.reduce((acc, c) => acc + c.sizeMB, 0);
+  const storageStats = {
+    usedMB: Math.round(totalStorageUsedMB * 10) / 10,
+    totalMB: 500,
+    milestoneClipsCount: clips.filter(c => c.isMilestone).length,
+  };
 
   const handleShare = async (clip: VideoClip) => {
-    const disciplineName = disciplines.find(d => d.id === clip.disciplineId)?.name || 'Sports & Skills';
+    setShareStatusText('Opening OS Share Sheet...');
     const result = await shareVideoOrCard({
-      title: `${clip.title} - Pocket Coach AI`,
-      text: `Check out my 30 FPS Agentic Video breakdown in ${disciplineName}! Coach commentary: "${clip.coachVoiceoverText}"`,
-      url: clip.videoUrl,
+      title: clip.title,
+      text: `🔥 New rep analyzed with Pocket Coach AI: "${clip.coachVoiceoverText}"`,
+      url: window.location.href,
     });
 
     if (result.success) {
-      if (result.method === 'native') {
-        setShareStatusText('Exported via Native OS Share sheet!');
-      } else if (result.method === 'copied') {
-        setShareStatusText('Clip link & breakdown copied to clipboard!');
-      } else {
-        setShareStatusText('Downloading video clip...');
-      }
+      setShareStatusText(result.method === 'native' ? 'Shared successfully!' : 'Copied link to clipboard!');
     } else {
       setShareStatusText(result.error || 'Share failed');
     }
@@ -47,65 +45,66 @@ export function FilmStudyView({ clips, disciplines, onToggleMilestone, onPruneCl
   return (
     <div className="flex flex-col gap-6 pb-24">
       {/* Header & On-Device Storage Manager Bar */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl border border-[#E6E0D4] p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
+          <span className="text-xs font-bold text-[#C2410C] uppercase tracking-widest flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5" /> Interactive Film Study & Video Vault
           </span>
-          <h2 className="text-2xl font-black text-white mt-1">Rep Review & OS Share</h2>
+          <h2 className="text-2xl font-black text-[#182030] mt-1">Rep Review & OS Share</h2>
+          <p className="text-xs text-[#5A6578]">Sub-second 30 FPS burst film analysis with coach voiceover bookmarks</p>
         </div>
 
         {/* Storage Meter & Auto-Prune Control */}
-        <div className="bg-slate-850 p-3 rounded-xl border border-slate-800 flex items-center gap-4 w-full md:w-auto justify-between">
+        <div className="bg-[#F4EFE6] p-3 rounded-xl border border-[#E6E0D4] flex items-center gap-4 w-full md:w-auto justify-between">
           <div className="flex items-center gap-2">
-            <HardDrive className="w-5 h-5 text-emerald-400" />
+            <HardDrive className="w-5 h-5 text-[#C2410C]" />
             <div className="text-xs">
-              <div className="font-bold text-white">{storageStats.usedMB} MB / {storageStats.totalMB} MB</div>
-              <div className="text-[10px] text-slate-400">{storageStats.milestoneClipsCount} Milestone Clips Locked in Vault</div>
+              <div className="font-bold text-[#182030]">{storageStats.usedMB} MB / {storageStats.totalMB} MB</div>
+              <div className="text-[10px] text-[#5A6578]">{storageStats.milestoneClipsCount} Milestone Clips Locked in Vault</div>
             </div>
           </div>
 
           <button
             onClick={onPruneClips}
-            className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
+            className="bg-white hover:bg-[#E6E0D4] text-[#182030] text-xs font-semibold px-3 py-1.5 rounded-lg border border-[#E6E0D4] flex items-center gap-1.5 transition cursor-pointer"
             title="Auto-prunes temporary non-milestone clips to free phone storage"
           >
-            <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Prune Temp Clips
+            <Trash2 className="w-3.5 h-3.5 text-rose-600" /> Prune Temp Clips
           </button>
         </div>
       </div>
 
       {shareStatusText && (
-        <div className="bg-emerald-950 border border-emerald-800 text-emerald-300 text-xs px-4 py-3 rounded-xl font-semibold shadow-lg text-center animate-fade-in">
+        <div className="bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-xs px-4 py-3 rounded-xl font-semibold shadow-xs text-center animate-fade-in">
           ✅ {shareStatusText}
         </div>
       )}
 
       {/* Main Interactive Video Player & Keyframe Breakdown */}
       {selectedClip && (
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-xl flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="bg-white rounded-2xl border border-[#E6E0D4] p-5 shadow-xs flex flex-col gap-4">
+          <div className="flex items-center justify-between border-b border-[#E6E0D4] pb-3">
             <div>
               <div className="flex items-center gap-2">
                 <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
                   selectedClip.repType === 'model'
-                    ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                    : 'bg-amber-950 text-amber-400 border border-amber-800'
+                    ? 'bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]'
+                    : 'bg-[#FFEDD5] text-[#C2410C] border border-[#FED7AA]'
                 }`}>
                   {selectedClip.repType === 'model' ? '🟢 Model Gold Standard' : '🟡 Adjustment Required'}
                 </span>
-                <span className="text-xs font-mono text-slate-400">{selectedClip.fpsCaptured} FPS Agentic Capture</span>
+                <span className="text-xs font-mono text-[#1D4ED8]">{selectedClip.fpsCaptured} FPS Agentic Capture</span>
               </div>
-              <h3 className="text-lg font-bold text-white mt-1">{selectedClip.title}</h3>
+              <h3 className="text-lg font-bold text-[#182030] mt-1">{selectedClip.title}</h3>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onToggleMilestone(selectedClip.id)}
-                className={`text-xs font-bold px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition ${
+                className={`text-xs font-bold px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition cursor-pointer ${
                   selectedClip.isMilestone
-                    ? 'bg-emerald-500 text-slate-950 border-emerald-400'
-                    : 'bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-600'
+                    ? 'bg-[#C2410C] text-white border-[#C2410C]'
+                    : 'bg-[#F4EFE6] text-[#182030] border border-[#E6E0D4] hover:border-[#D97706]'
                 }`}
               >
                 {selectedClip.isMilestone ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
@@ -114,7 +113,7 @@ export function FilmStudyView({ clips, disciplines, onToggleMilestone, onPruneCl
 
               <button
                 onClick={() => handleShare(selectedClip)}
-                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-3 py-1.5 rounded-xl border border-emerald-400 flex items-center gap-1.5 shadow-md shadow-emerald-950/40"
+                className="bg-[#1D4ED8] hover:bg-[#1e40af] text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-[#1D4ED8] flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <Share2 className="w-3.5 h-3.5" /> Share to Instagram/OS
               </button>
@@ -122,7 +121,7 @@ export function FilmStudyView({ clips, disciplines, onToggleMilestone, onPruneCl
           </div>
 
           {/* HTML5 Video Player */}
-          <div className="relative w-full aspect-[16/9] bg-black rounded-xl overflow-hidden border border-slate-800 group">
+          <div className="relative w-full aspect-[16/9] bg-[#182030] rounded-xl overflow-hidden border border-[#E6E0D4] group">
             <video
               src={selectedClip.videoUrl}
               poster={selectedClip.thumbnailUrl}
@@ -133,28 +132,28 @@ export function FilmStudyView({ clips, disciplines, onToggleMilestone, onPruneCl
           </div>
 
           {/* Coach Voiceover Annotation Banner */}
-          <div className="bg-slate-850 p-3.5 rounded-xl border border-slate-800 flex items-start gap-3">
+          <div className="bg-[#F4EFE6] p-3.5 rounded-xl border border-[#E6E0D4] flex items-start gap-3">
             <span className="text-lg">🎙️</span>
             <div className="text-xs">
-              <span className="font-bold text-emerald-400 uppercase tracking-wider block mb-0.5">Coach Audio Feedback Annotation</span>
-              <p className="text-slate-200 italic">&quot;{selectedClip.coachVoiceoverText}&quot;</p>
+              <span className="font-bold text-[#C2410C] uppercase tracking-wider block mb-0.5">Coach Audio Feedback Annotation</span>
+              <p className="text-[#182030] italic">&quot;{selectedClip.coachVoiceoverText}&quot;</p>
             </div>
           </div>
 
           {/* Keyframe Timeline Markers */}
           <div className="space-y-2">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <h4 className="text-xs font-bold text-[#5A6578] uppercase tracking-wider">
               ⏱️ Frame-by-Frame Sub-second Annotations (30 FPS)
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {selectedClip.keyframeNotes.map((note, idx) => (
-                <div key={idx} className="bg-slate-800/80 p-3 rounded-xl border border-slate-700/80 flex items-start gap-2 text-xs">
-                  <span className="font-mono bg-slate-950 text-emerald-400 px-2 py-0.5 rounded border border-slate-800 font-bold shrink-0">
+                <div key={idx} className="bg-[#F4EFE6] p-3 rounded-xl border border-[#E6E0D4] flex items-start gap-2 text-xs">
+                  <span className="font-mono bg-white text-[#C2410C] px-2 py-0.5 rounded border border-[#E6E0D4] font-bold shrink-0">
                     +{note.timeOffsetSeconds}s
                   </span>
                   <div>
-                    <span className="font-bold text-white block">{note.label}</span>
-                    <p className="text-slate-300 text-[11px] mt-0.5">{note.description}</p>
+                    <span className="font-bold text-[#182030] block">{note.label}</span>
+                    <p className="text-[#5A6578] text-[11px] mt-0.5">{note.description}</p>
                   </div>
                 </div>
               ))}
@@ -165,7 +164,7 @@ export function FilmStudyView({ clips, disciplines, onToggleMilestone, onPruneCl
 
       {/* Clip Library Grid */}
       <div className="space-y-3">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+        <h3 className="text-xs font-bold text-[#5A6578] uppercase tracking-wider">
           📼 Captured Video Clip Library ({clips.length} Saved)
         </h3>
 
@@ -176,19 +175,19 @@ export function FilmStudyView({ clips, disciplines, onToggleMilestone, onPruneCl
               <div
                 key={clip.id}
                 onClick={() => setSelectedClipId(clip.id)}
-                className={`bg-slate-900 rounded-xl border p-3 cursor-pointer transition-all flex flex-col justify-between gap-2 ${
+                className={`rounded-xl border p-3 cursor-pointer transition-all flex flex-col justify-between gap-2 ${
                   isSelected
-                    ? 'border-emerald-500 shadow-lg shadow-emerald-950/50 bg-slate-850'
-                    : 'border-slate-800 hover:border-slate-700'
+                    ? 'border-[#C2410C] shadow-md shadow-[#C2410C]/15 bg-[#FFFDF9]'
+                    : 'bg-white border-[#E6E0D4] hover:border-[#D97706]'
                 }`}
               >
-                <div className="relative aspect-[16/9] rounded-lg overflow-hidden bg-black">
+                <div className="relative aspect-[16/9] rounded-lg overflow-hidden bg-[#182030]">
                   <img src={clip.thumbnailUrl} alt={clip.title} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                     <Play className="w-8 h-8 text-white/90 fill-current" />
                   </div>
                   {clip.isMilestone && (
-                    <span className="absolute top-2 left-2 bg-emerald-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded shadow">
+                    <span className="absolute top-2 left-2 bg-[#C2410C] text-white text-[10px] font-black px-2 py-0.5 rounded shadow-xs">
                       🔒 VAULT
                     </span>
                   )}
@@ -198,8 +197,8 @@ export function FilmStudyView({ clips, disciplines, onToggleMilestone, onPruneCl
                 </div>
 
                 <div>
-                  <h4 className="text-xs font-bold text-white line-clamp-1">{clip.title}</h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{new Date(clip.createdAt).toLocaleDateString()} • {clip.sizeMB} MB</p>
+                  <h4 className="text-xs font-bold text-[#182030] line-clamp-1">{clip.title}</h4>
+                  <p className="text-[10px] text-[#5A6578] mt-0.5">{new Date(clip.createdAt).toLocaleDateString()} • {clip.sizeMB} MB</p>
                 </div>
               </div>
             );
