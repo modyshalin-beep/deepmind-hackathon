@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Discipline, CoachProfile, VideoClip, SessionReport, 
-  LocalMatchPartner, SkillLevel, CourseModule, PracticeSchedule, EnrolledSkillProgress 
+  SkillLevel, CourseModule, PracticeSchedule, EnrolledSkillProgress, LocalMatchPartner 
 } from '@/types';
 import { INITIAL_DISCIPLINES, INITIAL_COACH_PROFILE, INITIAL_VIDEO_CLIPS, INITIAL_LOCAL_MATCHES } from '@/lib/mockData';
 import { loadCoachProfile, saveCoachProfile, loadVideoClips, saveVideoClips, loadSessions, saveSessions, pruneNonMilestoneClips } from '@/lib/storage';
@@ -24,7 +24,7 @@ export default function Home() {
   const [sessions, setSessions] = useState<SessionReport[]>([]);
   const [localMatches, setLocalMatches] = useState<LocalMatchPartner[]>(INITIAL_LOCAL_MATCHES);
 
-  // Navigation: Exactly 3 tabs
+  // Navigation: 3 tabs (Lesson Plans, Review, The Club)
   const [activeTab, setActiveTab] = useState<'plans' | 'review' | 'club'>('plans');
 
   // Active Live Lesson Session (launches camera/voice coaching)
@@ -86,6 +86,7 @@ export default function Home() {
     selectedDisciplineIds: string[];
     skillLevels: Record<string, SkillLevel>;
     goals: Record<string, string>;
+    schedules?: Record<string, PracticeSchedule>;
     schedule: PracticeSchedule;
     startLessonImmediately?: boolean;
     primaryDisciplineId: string;
@@ -99,12 +100,13 @@ export default function Home() {
       const disc = disciplines.find(d => d.id === id);
       const existing = updatedSkillsProgress[id];
       const level = data.skillLevels[id] || 'beginner';
+      const skillSched = data.schedules?.[id] || data.schedule;
       
       updatedSkillsProgress[id] = {
         disciplineId: id,
         skillLevel: level,
         primaryGoal: data.goals[id] || disc?.microFocus || 'Master fundamentals',
-        schedule: data.schedule,
+        schedule: skillSched,
         completedModuleIds: existing?.completedModuleIds || [],
         currentModuleId: existing?.currentModuleId || disc?.modules?.[0]?.id || '',
         progressPercent: existing?.progressPercent || 0,
@@ -340,7 +342,7 @@ export default function Home() {
         onCompleteOnboarding={handleCompleteOnboarding}
       />
 
-      {/* Clean 3-Tab Bottom Navigation Bar (Hidden while practicing in StudioView) */}
+      {/* Clean 2-Tab Bottom Navigation Bar (Hidden while practicing in StudioView) */}
       {!activeLessonSession && (
         <BottomTabs
           activeTab={activeTab}

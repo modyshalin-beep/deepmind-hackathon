@@ -3,9 +3,7 @@
 import React, { useState } from 'react';
 import { VideoClip, Discipline, CoachProfile } from '@/types';
 import { 
-  Film, Share2, Star, Play, CheckCircle2, AlertCircle, 
-  Sparkles, Target, Award, Clock, ArrowRight, BarChart3, 
-  Activity, Zap, Utensils, Heart, Music
+  Film, Share2, Star, Play, BarChart3, Clock, Target, Award
 } from 'lucide-react';
 import { shareVideoOrCard } from '@/lib/webShare';
 
@@ -20,56 +18,29 @@ interface ReviewViewProps {
 
 export function ReviewView({
   clips,
-  disciplines,
   activeDiscipline,
   coachProfile,
   onToggleMilestone,
-  onPruneClips,
 }: ReviewViewProps) {
-  // Enrolled skills
-  const enrolledIds = coachProfile.enrolledDisciplineIds || [activeDiscipline.id];
-  const enrolledDisciplines = disciplines.filter(d => enrolledIds.includes(d.id));
-
-  // Filter by skill
-  const [selectedFilterSkillId, setSelectedFilterSkillId] = useState<string>('all');
-  
   // Sub-tab: 'clips' vs 'mastery'
   const [subView, setSubView] = useState<'clips' | 'mastery'>('clips');
 
   // Currently playing clip
   const [activePlayingClipId, setActivePlayingClipId] = useState<string | null>(null);
 
-  // Filtered clips
-  const filteredClips = selectedFilterSkillId === 'all'
-    ? clips
-    : clips.filter(c => c.disciplineId === selectedFilterSkillId);
-
-  // Discipline for mastery view
-  const targetMasteryDiscipline = selectedFilterSkillId === 'all'
-    ? activeDiscipline
-    : (disciplines.find(d => d.id === selectedFilterSkillId) || activeDiscipline);
+  // Clips filtered strictly by active discipline (no redundant second filter)
+  const skillClips = clips.filter(c => c.disciplineId === activeDiscipline.id);
 
   const handleShare = async (clip: VideoClip) => {
-    const disciplineName = disciplines.find(d => d.id === clip.disciplineId)?.name || 'Sports';
     await shareVideoOrCard({
       title: `${clip.title} - Pocket Coach AI`,
-      text: `My 30 FPS video breakdown in ${disciplineName}! Coach feedback: "${clip.coachVoiceoverText}"`,
+      text: `My 30 FPS video breakdown in ${activeDiscipline.name}! Coach feedback: "${clip.coachVoiceoverText}"`,
       url: window.location.href,
     });
   };
 
-  const getDisciplineIcon = (id: string) => {
-    switch (id) {
-      case 'tennis': return <Activity className="w-3.5 h-3.5 text-emerald-400" />;
-      case 'boxing': return <Zap className="w-3.5 h-3.5 text-amber-400" />;
-      case 'dance': return <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />;
-      case 'cooking': return <Utensils className="w-3.5 h-3.5 text-cyan-400" />;
-      case 'guitar': return <Music className="w-3.5 h-3.5 text-violet-400" />;
-      case 'yoga': return <Heart className="w-3.5 h-3.5 text-rose-400" />;
-      case 'golf': return <Target className="w-3.5 h-3.5 text-emerald-400" />;
-      default: return <Activity className="w-3.5 h-3.5 text-emerald-400" />;
-    }
-  };
+  const progress = coachProfile.skillsProgress?.[activeDiscipline.id];
+  const hoursSpent = progress?.hoursSpent || 12;
 
   return (
     <div className="flex flex-col gap-5 pb-24">
@@ -77,9 +48,9 @@ export function ReviewView({
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider block">
-            Review Hub
+            {activeDiscipline.name}
           </span>
-          <h2 className="text-xl sm:text-2xl font-black text-white">Video Reps & Skill Analytics</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-white">Review & Mastery</h2>
         </div>
 
         {/* Sub-view switcher */}
@@ -93,7 +64,7 @@ export function ReviewView({
             }`}
           >
             <Film className="w-3.5 h-3.5" />
-            <span>Video Clips ({filteredClips.length})</span>
+            <span>Video Clips ({skillClips.length})</span>
           </button>
 
           <button
@@ -110,51 +81,21 @@ export function ReviewView({
         </div>
       </div>
 
-      {/* ---------------- 2. SKILL FILTER PILLS ---------------- */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-        <button
-          onClick={() => setSelectedFilterSkillId('all')}
-          className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition shrink-0 cursor-pointer ${
-            selectedFilterSkillId === 'all'
-              ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-black'
-              : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
-          }`}
-        >
-          All Enrolled Skills
-        </button>
-
-        {enrolledDisciplines.map((d) => (
-          <button
-            key={d.id}
-            onClick={() => setSelectedFilterSkillId(d.id)}
-            className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
-              selectedFilterSkillId === d.id
-                ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-black'
-                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
-            }`}
-          >
-            {getDisciplineIcon(d.id)}
-            <span>{d.shortName || d.name}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* ---------------- 3. SUBVIEW: VIDEO CLIPS ---------------- */}
+      {/* ---------------- 2. SUBVIEW: VIDEO CLIPS ---------------- */}
       {subView === 'clips' && (
         <div className="space-y-4">
-          {filteredClips.length === 0 ? (
+          {skillClips.length === 0 ? (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center space-y-2">
               <Film className="w-8 h-8 text-slate-600 mx-auto" />
               <h3 className="font-bold text-slate-300 text-sm">No Recorded Clips Yet</h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                Complete a practice session in Lesson Plans to capture 30 FPS video bursts and AI coach breakdown commentary.
+                Complete a session in Lesson Plans to capture 30 FPS video bursts and AI coach breakdown commentary for {activeDiscipline.name}.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredClips.map((clip) => {
+              {skillClips.map((clip) => {
                 const isPlaying = activePlayingClipId === clip.id;
-                const disc = disciplines.find(d => d.id === clip.disciplineId);
 
                 return (
                   <div
@@ -203,7 +144,7 @@ export function ReviewView({
                         <div>
                           <h4 className="text-sm font-bold text-white">{clip.title}</h4>
                           <span className="text-[11px] text-emerald-400 font-mono">
-                            {disc?.name || 'Skill'} • {clip.durationSeconds}s
+                            {clip.durationSeconds}s drill rep
                           </span>
                         </div>
 
@@ -260,21 +201,21 @@ export function ReviewView({
         </div>
       )}
 
-      {/* ---------------- 4. SUBVIEW: MASTERY ANALYTICS ---------------- */}
+      {/* ---------------- 3. SUBVIEW: MASTERY ANALYTICS ---------------- */}
       {subView === 'mastery' && (
         <div className="space-y-4">
           {/* Target Skill Stats Banner */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <img
-                src={targetMasteryDiscipline.coachPersona.avatar}
-                alt={targetMasteryDiscipline.coachPersona.name}
+                src={activeDiscipline.coachPersona.avatar}
+                alt={activeDiscipline.coachPersona.name}
                 className="w-12 h-12 rounded-full object-cover border-2 border-emerald-400"
               />
               <div>
-                <h3 className="text-base font-bold text-white">{targetMasteryDiscipline.name}</h3>
+                <h3 className="text-base font-bold text-white">{activeDiscipline.name}</h3>
                 <span className="text-xs text-emerald-400 font-mono">
-                  Coach {targetMasteryDiscipline.coachPersona.name} • {targetMasteryDiscipline.overallScore} / 10 Verified
+                  Coach {activeDiscipline.coachPersona.name} • {activeDiscipline.overallScore} / 10 Verified
                 </span>
               </div>
             </div>
@@ -282,7 +223,7 @@ export function ReviewView({
             <div className="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 text-right">
               <span className="text-[10px] text-slate-400 uppercase font-mono block">Deliberate Practice</span>
               <span className="text-base font-black text-emerald-400">
-                {coachProfile.skillsProgress?.[targetMasteryDiscipline.id]?.hoursSpent || 12}h logged
+                {hoursSpent}h logged
               </span>
             </div>
           </div>
@@ -294,7 +235,7 @@ export function ReviewView({
             </h4>
 
             <div className="space-y-3">
-              {targetMasteryDiscipline.subcomponents.map((sub) => (
+              {activeDiscipline.subcomponents.map((sub) => (
                 <div key={sub.id} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-slate-200">{sub.name}</span>
@@ -317,7 +258,7 @@ export function ReviewView({
               Coach Prescription
             </h4>
             <p className="text-xs text-slate-300 leading-relaxed">
-              &quot;We are locking in your strengths while targeting <strong className="text-emerald-400">{targetMasteryDiscipline.microFocus}</strong>. Every practice session is calibrated to build muscle memory through deliberate, sub-second feedback.&quot;
+              &quot;Focusing on <strong className="text-emerald-400">{activeDiscipline.microFocus}</strong>. Every drill reinforces sub-second reaction timing and repeatable biomechanics.&quot;
             </p>
           </div>
         </div>

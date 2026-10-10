@@ -2,10 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { CoachProfile, Discipline } from '@/types';
-import { 
-  ChevronDown, Plus, Sparkles, Check, 
-  Activity, Zap, Utensils, Heart, Target, Music, Video, Volume2
-} from 'lucide-react';
+import { ChevronDown, Plus, Sparkles, Check } from 'lucide-react';
 
 interface HeaderNavProps {
   coachProfile: CoachProfile;
@@ -24,7 +21,6 @@ export function HeaderNav({
   onSelectDiscipline,
   onOpenAddSkill,
   onTriggerOnboarding,
-  onShowLanding,
 }: HeaderNavProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -43,16 +39,16 @@ export function HeaderNav({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getDisciplineIcon = (id: string) => {
+  const getDisciplineIconEmoji = (id: string) => {
     switch (id) {
-      case 'tennis': return <Activity className="w-3.5 h-3.5 text-emerald-400" />;
-      case 'boxing': return <Zap className="w-3.5 h-3.5 text-amber-400" />;
-      case 'dance': return <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />;
-      case 'cooking': return <Utensils className="w-3.5 h-3.5 text-cyan-400" />;
-      case 'guitar': return <Music className="w-3.5 h-3.5 text-violet-400" />;
-      case 'yoga': return <Heart className="w-3.5 h-3.5 text-rose-400" />;
-      case 'golf': return <Target className="w-3.5 h-3.5 text-emerald-400" />;
-      default: return <Activity className="w-3.5 h-3.5 text-emerald-400" />;
+      case 'tennis': return '🎾';
+      case 'boxing': return '🥊';
+      case 'dance': return '💃';
+      case 'cooking': return '🔪';
+      case 'guitar': return '🎸';
+      case 'yoga': return '🧘';
+      case 'golf': return '⛳';
+      default: return '⚡';
     }
   };
 
@@ -72,10 +68,10 @@ export function HeaderNav({
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-emerald-500/60 px-3 py-1.5 rounded-full flex items-center gap-2 transition cursor-pointer shadow-sm"
+            className="bg-slate-900 hover:bg-slate-850 border border-slate-800 hover:border-emerald-500/60 px-3.5 py-1.5 rounded-full flex items-center gap-2 transition cursor-pointer shadow-sm"
           >
             <div className="flex items-center gap-1.5">
-              {getDisciplineIcon(activeDiscipline.id)}
+              <span className="text-sm">{getDisciplineIconEmoji(activeDiscipline.id)}</span>
               <span className="text-xs font-bold text-white">
                 {activeDiscipline.shortName || activeDiscipline.name}
               </span>
@@ -106,7 +102,7 @@ export function HeaderNav({
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      {getDisciplineIcon(d.id)}
+                      <span className="text-sm">{getDisciplineIconEmoji(d.id)}</span>
                       <span className="text-xs">{d.name}</span>
                     </div>
                     {isActive && <Check className="w-3.5 h-3.5 text-emerald-400" />}
@@ -141,25 +137,8 @@ export function HeaderNav({
           )}
         </div>
 
-        {/* Right Section: Onboarding button & System Status Indicator */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onTriggerOnboarding}
-            className="bg-emerald-950/90 hover:bg-emerald-900 text-emerald-400 hover:text-emerald-300 border border-emerald-800/90 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
-            title="Open Onboarding Flow"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Onboarding</span>
-          </button>
-
-          <div className="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-full flex items-center gap-2 text-[11px] font-mono text-slate-300">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="text-emerald-400 font-semibold hidden sm:inline">AI Coach Active</span>
-          </div>
-        </div>
+        {/* Right Section: Empty or minimalist balance spacer */}
+        <div className="w-7 sm:w-28 flex justify-end" />
 
       </div>
     </header>

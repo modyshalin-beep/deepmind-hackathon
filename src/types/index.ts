@@ -21,6 +21,8 @@ export interface CourseModule {
   id: string;
   disciplineId: string;
   order: number;
+  level?: number;
+  stageName?: string;
   title: string;
   subtitle: string;
   estimatedMinutes: number;
