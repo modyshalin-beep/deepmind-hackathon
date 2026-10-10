@@ -72,10 +72,9 @@ export function ClubView({ localMatches, activeDiscipline }: ClubViewProps) {
                   </div>
                 </div>
 
-                <div className="bg-[#F7F3EE] p-3 rounded-2xl border border-[#E8E2D8] text-xs">
-                  <span className="text-[10px] font-bold text-[#6E757C] uppercase block mb-0.5">Recent Breakthrough</span>
-                  <p className="text-[#3E4348] italic">&quot;{partner.recentBreakthrough}&quot;</p>
-                </div>
+                <p className="text-xs text-[#6E757C] italic pl-2.5 border-l-2 border-[#A4C2F4] my-1">
+                  &quot;{partner.recentBreakthrough}&quot;
+                </p>
 
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-[10px] font-bold text-[#6E757C] bg-[#F7F3EE] px-2.5 py-1 rounded-full border border-[#E8E2D8]">

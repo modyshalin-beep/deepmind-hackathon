@@ -4,58 +4,37 @@ import React, { useState } from 'react';
 import { Discipline, CoachProfile, CourseModule } from '@/types';
 import { 
   Play, CheckCircle2, Lock, Clock, BookOpen, 
-  ArrowRight, Plus, Activity, Utensils, Heart, Target, 
-  RotateCcw, Zap, Music, Sparkles, ChevronDown, ChevronUp
+  RotateCcw, ChevronDown, ChevronUp
 } from 'lucide-react';
 
 interface LessonPlansViewProps {
   disciplines: Discipline[];
   activeDiscipline: Discipline;
   coachProfile: CoachProfile;
-  onSelectDiscipline: (d: Discipline) => void;
   onStartLesson: (discipline: Discipline, module: CourseModule) => void;
-  onOpenAddSkill: () => void;
+  onSelectDiscipline?: (d: Discipline) => void;
+  onOpenAddSkill?: () => void;
 }
 
 export function LessonPlansView({
   disciplines,
   activeDiscipline,
   coachProfile,
-  onSelectDiscipline,
   onStartLesson,
-  onOpenAddSkill,
 }: LessonPlansViewProps) {
-  const enrolledIds = coachProfile.enrolledDisciplineIds || [activeDiscipline.id];
-  const enrolledDisciplines = disciplines.filter(d => enrolledIds.includes(d.id));
-
-  // Current roadmap viewing discipline
-  const [roadmapDisciplineId, setRoadmapDisciplineId] = useState<string>(activeDiscipline.id);
-
-  const roadmapDiscipline = 
-    disciplines.find(d => d.id === roadmapDisciplineId) || 
-    activeDiscipline;
-
-  const currentSkillProgress = coachProfile.skillsProgress?.[roadmapDiscipline.id];
-  const activeModule = roadmapDiscipline.modules?.find(
+  const currentSkillProgress = coachProfile.skillsProgress?.[activeDiscipline.id];
+  const activeModule = activeDiscipline.modules?.find(
     m => m.id === currentSkillProgress?.currentModuleId
-  ) || roadmapDiscipline.modules?.find(m => m.status === 'in_progress') || roadmapDiscipline.modules?.[0];
+  ) || activeDiscipline.modules?.find(m => m.status === 'in_progress') || activeDiscipline.modules?.[0];
 
-  const getDisciplineIcon = (id: string) => {
-    switch (id) {
-      case 'tennis': return <Activity className="w-4 h-4 text-[#E8A5A5]" />;
-      case 'boxing': return <Zap className="w-4 h-4 text-[#E9D78E]" />;
-      case 'dance': return <Sparkles className="w-4 h-4 text-[#A4C2F4]" />;
-      case 'cooking': return <Utensils className="w-4 h-4 text-[#B5C99A]" />;
-      case 'guitar': return <Music className="w-4 h-4 text-[#E8A5A5]" />;
-      case 'yoga': return <Heart className="w-4 h-4 text-[#E8A5A5]" />;
-      case 'golf': return <Target className="w-4 h-4 text-[#B5C99A]" />;
-      default: return <Activity className="w-4 h-4 text-[#A4C2F4]" />;
-    }
-  };
+  const currentLevel = currentSkillProgress?.skillLevel || coachProfile.skillLevel || 'Beginner';
+  const scheduleText = coachProfile.schedule 
+    ? `${coachProfile.schedule.daysPerWeek}d/wk`
+    : '3d/wk';
 
   // Group modules into stages
   const stages: { stageNumber: number; title: string; modules: CourseModule[] }[] = [];
-  const allModules = roadmapDiscipline.modules || [];
+  const allModules = activeDiscipline.modules || [];
   
   if (allModules.length <= 3) {
     stages.push({
@@ -66,14 +45,14 @@ export function LessonPlansView({
     if (allModules.length > 2) {
       stages.push({
         stageNumber: 2,
-        title: 'Stage 2: Fluid Execution & Precision',
+        title: 'Stage 2: Fluid Execution',
         modules: allModules.slice(2),
       });
     }
   } else {
     stages.push({
       stageNumber: 1,
-      title: 'Stage 1: Foundation & Posture',
+      title: 'Stage 1: Foundation',
       modules: allModules.slice(0, 2),
     });
     stages.push({
@@ -84,13 +63,12 @@ export function LessonPlansView({
     if (allModules.length > 4) {
       stages.push({
         stageNumber: 3,
-        title: 'Stage 3: Fluid Speed & Game Mechanics',
+        title: 'Stage 3: Game Speed',
         modules: allModules.slice(4),
       });
     }
   }
 
-  // Expanded stages state (default all open or active open)
   const [expandedStages, setExpandedStages] = useState<Record<number, boolean>>({
     1: true,
     2: true,
@@ -105,196 +83,74 @@ export function LessonPlansView({
   };
 
   return (
-    <div className="flex flex-col gap-6 pb-24">
-      {/* ---------------- 1. TOP STATS BAR ---------------- */}
-      <div className="bg-[#FAF9F6] border border-[#E8E2D8] rounded-3xl p-5 flex items-center justify-between gap-4 shadow-xs">
-        <div>
-          <span className="text-[10px] font-mono text-[#E8A5A5] font-bold uppercase tracking-wider block">
-            Lesson Plans
-          </span>
-          <h2 className="text-xl sm:text-2xl font-black text-[#3E4348]">Your Training Roadmap</h2>
-        </div>
-
-        <div className="flex items-center gap-3 text-right">
-          <div className="bg-[#F7F3EE] px-3.5 py-1.5 rounded-2xl border border-[#E8E2D8]">
-            <span className="text-[10px] text-[#6E757C] block font-mono">Enrolled</span>
-            <span className="text-sm font-black text-[#3E4348]">{enrolledDisciplines.length} Skills</span>
-          </div>
-          <div className="bg-[#F7F3EE] px-3.5 py-1.5 rounded-2xl border border-[#E8E2D8]">
-            <span className="text-[10px] text-[#6E757C] block font-mono">Schedule</span>
-            <span className="text-sm font-black text-[#3E4348]">
-              {coachProfile.schedule ? `${coachProfile.schedule.daysPerWeek}d / wk` : '3d / wk'}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* ---------------- 2. HERO: UP NEXT LESSON (1-TAP LAUNCH) ---------------- */}
+    <div className="flex flex-col gap-5 pb-24">
+      {/* ---------------- 1. HERO: UP NEXT LESSON (CLEAN, FLATTENED) ---------------- */}
       {activeModule && (
-        <div className="bg-gradient-to-br from-[#FAF9F6] via-[#F7F3EE] to-[#FAF9F6] border border-[#E8A5A5]/60 rounded-3xl p-6 shadow-sm relative overflow-hidden">
+        <div className="bg-white border border-[#E8E2D8] rounded-3xl p-5 sm:p-6 shadow-xs">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-            <div className="space-y-2.5 flex-1">
+            <div className="space-y-1.5 flex-1">
               <div className="flex items-center gap-2">
-                <span className="bg-[#E8A5A5] text-white text-[10px] font-black uppercase px-3 py-1 rounded-full flex items-center gap-1 shadow-xs">
-                  <Play className="w-2.5 h-2.5 fill-white" /> Up Next Drill
+                <span className="bg-[#E8A5A5] text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
+                  Up Next
                 </span>
-                <span className="text-xs font-semibold text-[#E8A5A5]">
-                  {roadmapDiscipline.name} • Module {activeModule.order} of {roadmapDiscipline.modules?.length || 3}
+                <span className="text-xs font-semibold text-[#6E757C]">
+                  {activeDiscipline.name} • Module {activeModule.order} of {activeDiscipline.modules?.length || 3}
                 </span>
               </div>
 
-              <div>
-                <h3 className="text-xl sm:text-2xl font-black text-[#3E4348]">
-                  {activeModule.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-[#6E757C] mt-1 line-clamp-2">
-                  {activeModule.subtitle}
-                </p>
-              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-[#3E4348]">
+                {activeModule.title}
+              </h3>
+              
+              <p className="text-xs sm:text-sm text-[#6E757C] line-clamp-1">
+                {activeModule.subtitle}
+              </p>
 
-              <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] font-mono text-[#6E757C]">
-                <span className="bg-[#FAF9F6] px-3 py-1 rounded-xl border border-[#E8E2D8] flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-[#A4C2F4]" /> {activeModule.estimatedMinutes}m drill
-                </span>
-                <span className="bg-[#FAF9F6] px-3 py-1 rounded-xl border border-[#E8E2D8]">
-                  Focus: {activeModule.microFocus}
-                </span>
+              <div className="flex items-center gap-2 text-xs text-[#6E757C] pt-1">
+                <span className="font-semibold text-[#3E4348]">{activeModule.estimatedMinutes}m drill</span>
+                <span>•</span>
+                <span className="capitalize">{currentLevel}</span>
+                <span>•</span>
+                <span>{scheduleText}</span>
+                <span>•</span>
+                <span className="text-[#E8A5A5] font-medium">{activeModule.microFocus}</span>
               </div>
             </div>
 
-            {/* Launch Action */}
-            <div className="w-full md:w-auto shrink-0 flex flex-col gap-2.5">
-              <div className="flex items-center gap-2.5 bg-[#FAF9F6] p-2.5 rounded-2xl border border-[#E8E2D8]">
+            {/* Launch & Coach (Flattened, no nested boxes) */}
+            <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
+              <div className="flex items-center gap-2.5 pr-2">
                 <img
-                  src={roadmapDiscipline.coachPersona.avatar}
-                  alt={roadmapDiscipline.coachPersona.name}
-                  className="w-9 h-9 rounded-full object-cover border border-[#E8A5A5]"
+                  src={activeDiscipline.coachPersona.avatar}
+                  alt={activeDiscipline.coachPersona.name}
+                  className="w-10 h-10 rounded-full object-cover border-2 border-[#E8A5A5]"
                 />
                 <div>
-                  <span className="text-xs font-bold text-[#3E4348] block">Coach {roadmapDiscipline.coachPersona.name}</span>
-                  <span className="text-[10px] text-[#A4C2F4] block font-mono font-bold">Live Camera & Voice</span>
+                  <span className="text-xs font-bold text-[#3E4348] block leading-tight">Coach {activeDiscipline.coachPersona.name}</span>
+                  <span className="text-[10px] text-[#A4C2F4] block font-medium">Live Voice & Vision</span>
                 </div>
               </div>
 
               <button
-                onClick={() => onStartLesson(roadmapDiscipline, activeModule)}
-                className="w-full bg-[#A4C2F4] hover:bg-[#8bb2f2] text-[#3E4348] font-black text-sm py-3.5 px-6 rounded-2xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer transform active:scale-95"
+                onClick={() => onStartLesson(activeDiscipline, activeModule)}
+                className="flex-1 md:flex-initial bg-[#A4C2F4] hover:bg-[#8bb2f2] text-[#3E4348] font-black text-sm py-3 px-5 rounded-2xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer transform active:scale-95"
               >
-                <Play className="w-4 h-4 fill-[#3E4348]" /> Start Practice Session
+                <Play className="w-4 h-4 fill-[#3E4348]" /> Start Session
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ---------------- 3. ENROLLED SKILLS (CAROUSEL / GRID) ---------------- */}
+      {/* ---------------- 2. CURRICULUM ROADMAP (FLATTENED ACCORDION) ---------------- */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-black text-[#3E4348]">My Skills</h3>
-          <button
-            onClick={onOpenAddSkill}
-            className="text-xs font-bold text-[#3E4348] hover:bg-white bg-[#FAF9F6] border border-[#E8E2D8] hover:border-[#A4C2F4] px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <Plus className="w-3.5 h-3.5 text-[#E8A5A5]" /> Learn Another Skill
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {enrolledDisciplines.map((d) => {
-            const isViewing = d.id === roadmapDiscipline.id;
-            const progress = coachProfile.skillsProgress?.[d.id];
-            const currentLevel = progress?.skillLevel || 'beginner';
-            const completedCount = progress?.completedModuleIds?.length || 0;
-            const totalModules = d.modules?.length || 3;
-            const percent = progress?.progressPercent || Math.round((completedCount / totalModules) * 100) || 20;
-
-            const nextModule = d.modules?.find(m => m.id === progress?.currentModuleId) || 
-                               d.modules?.find(m => m.status === 'in_progress') || 
-                               d.modules?.[0];
-
-            return (
-              <div
-                key={d.id}
-                onClick={() => {
-                  setRoadmapDisciplineId(d.id);
-                  onSelectDiscipline(d);
-                }}
-                className={`p-4 rounded-3xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
-                  isViewing
-                    ? 'bg-[#FAF9F6] border-[#A4C2F4] shadow-sm ring-2 ring-[#A4C2F4]/40'
-                    : 'bg-[#FAF9F6] border-[#E8E2D8] hover:border-[#E8A5A5]'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-2xl bg-white border border-[#E8E2D8]">
-                      {getDisciplineIcon(d.id)}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-[#3E4348]">{d.name}</h4>
-                      <span className="text-[10px] text-[#6E757C] font-mono">
-                        Level: <strong className="text-[#3E4348] capitalize">{currentLevel}</strong>
-                      </span>
-                    </div>
-                  </div>
-
-                  <span className="text-[11px] font-mono text-[#42592B] bg-[#B5C99A]/30 px-2.5 py-0.5 rounded-full border border-[#B5C99A]/50 font-bold">
-                    {percent}%
-                  </span>
-                </div>
-
-                {/* Mini Progress Bar */}
-                <div className="w-full bg-[#E8E2D8] h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-[#B5C99A] h-full rounded-full transition-all"
-                    style={{ width: `${percent}%` }}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] pt-1 border-t border-[#E8E2D8]">
-                  <span className="text-[#6E757C] truncate">
-                    {completedCount} of {totalModules} modules
-                  </span>
-                  {nextModule && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectDiscipline(d);
-                        onStartLesson(d, nextModule);
-                      }}
-                      className="text-[#E8A5A5] hover:text-[#3E4348] font-bold flex items-center gap-1 transition"
-                    >
-                      <span>Resume</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Quick Add Card */}
-          <button
-            onClick={onOpenAddSkill}
-            className="p-4 rounded-3xl border-2 border-dashed border-[#E8E2D8] hover:border-[#A4C2F4] transition flex flex-col items-center justify-center gap-2 text-center text-[#6E757C] hover:text-[#3E4348] bg-[#FAF9F6]/60 cursor-pointer min-h-[120px]"
-          >
-            <div className="w-8 h-8 rounded-full bg-[#F7F3EE] flex items-center justify-center text-[#6E757C]">
-              <Plus className="w-4 h-4 text-[#E8A5A5]" />
-            </div>
-            <span className="text-xs font-bold">Add Another Skill</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ---------------- 4. COLLAPSIBLE STAGES CURRICULUM ---------------- */}
-      <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-base font-black text-[#3E4348] flex items-center gap-2">
+          <h3 className="text-sm font-black text-[#3E4348] uppercase tracking-wider flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-[#A4C2F4]" />
-            Curriculum Roadmap: {roadmapDiscipline.name}
+            Roadmap
           </h3>
-          <span className="text-xs text-[#6E757C] font-mono">
-            {stages.length} Stages • Tap to expand/collapse
+          <span className="text-xs text-[#6E757C]">
+            {stages.length} Stages
           </span>
         </div>
 
@@ -307,20 +163,20 @@ export function LessonPlansView({
           return (
             <div 
               key={stage.stageNumber} 
-              className="bg-[#FAF9F6] border border-[#E8E2D8] rounded-3xl overflow-hidden transition-all shadow-xs"
+              className="bg-white border border-[#E8E2D8] rounded-3xl overflow-hidden shadow-xs"
             >
-              {/* Collapsible Header */}
+              {/* Header */}
               <button
                 onClick={() => toggleStage(stage.stageNumber)}
-                className="w-full p-4 flex items-center justify-between text-left hover:bg-white transition cursor-pointer"
+                className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-[#FAF9F6] transition cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <span className={`w-7 h-7 rounded-2xl text-[11px] font-mono font-bold flex items-center justify-center border ${
+                  <span className={`w-6 h-6 rounded-xl text-xs font-bold flex items-center justify-center ${
                     stageCompleted
-                      ? 'bg-[#B5C99A]/30 border-[#B5C99A] text-[#42592B]'
+                      ? 'bg-[#B5C99A]/30 text-[#42592B]'
                       : stageInProgress
-                      ? 'bg-[#A4C2F4] border-[#A4C2F4] text-[#3E4348]'
-                      : 'bg-[#F7F3EE] border-[#E8E2D8] text-[#6E757C]'
+                      ? 'bg-[#A4C2F4] text-[#3E4348]'
+                      : 'bg-[#F7F3EE] text-[#6E757C]'
                   }`}>
                     {stageCompleted ? '✓' : stage.stageNumber}
                   </span>
@@ -329,28 +185,25 @@ export function LessonPlansView({
                     <h4 className="text-sm font-bold text-[#3E4348] flex items-center gap-2">
                       {stage.title}
                       {stageInProgress && (
-                        <span className="text-[9px] font-mono bg-[#E8A5A5]/25 text-[#9E3E3E] border border-[#E8A5A5]/50 px-2 py-0.5 rounded-full font-bold uppercase">
-                          Active Stage
+                        <span className="text-[9px] bg-[#E8A5A5]/25 text-[#9E3E3E] px-2 py-0.5 rounded-full font-bold uppercase">
+                          Current
                         </span>
                       )}
                     </h4>
-                    <span className="text-[11px] text-[#6E757C] font-mono">
-                      {completedInStage} of {stage.modules.length} Modules Completed
+                    <span className="text-[11px] text-[#6E757C]">
+                      {completedInStage} of {stage.modules.length} Completed
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 text-[#6E757C]">
-                  <span className="text-xs font-mono hidden sm:inline">
-                    {isExpanded ? 'Collapse' : 'Expand'}
-                  </span>
+                <div className="text-[#6E757C]">
                   {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </div>
               </button>
 
-              {/* Collapsible Module List */}
+              {/* Module List (Clean rows, un-nested) */}
               {isExpanded && (
-                <div className="p-4 pt-1 border-t border-[#E8E2D8] space-y-2.5 bg-[#F7F3EE]/50">
+                <div className="border-t border-[#E8E2D8] divide-y divide-[#E8E2D8]/60 bg-[#FAF9F6]/40">
                   {stage.modules.map((mod) => {
                     const isCompleted = mod.status === 'completed';
                     const isInProgress = mod.status === 'in_progress';
@@ -359,52 +212,38 @@ export function LessonPlansView({
                     return (
                       <div
                         key={mod.id}
-                        className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition ${
-                          isInProgress
-                            ? 'bg-[#FAF9F6] border-[#E8A5A5] shadow-xs ring-1 ring-[#E8A5A5]/40'
-                            : isCompleted
-                            ? 'bg-[#FAF9F6] border-[#E8E2D8]'
-                            : 'bg-[#F7F3EE]/60 border-[#E8E2D8]/60 opacity-60'
+                        className={`px-5 py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition ${
+                          isInProgress ? 'bg-white' : ''
                         }`}
                       >
-                        <div className="flex items-start gap-3 flex-1">
-                          <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border text-xs font-bold ${
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold ${
                             isCompleted
-                              ? 'bg-[#B5C99A]/30 border-[#B5C99A] text-[#42592B]'
+                              ? 'text-[#42592B]'
                               : isInProgress
-                              ? 'bg-[#E8A5A5] border-[#E8A5A5] text-white'
-                              : 'bg-[#F7F3EE] border-[#E8E2D8] text-[#6E757C]'
+                              ? 'text-[#E8A5A5]'
+                              : 'text-[#6E757C]'
                           }`}>
-                            {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : mod.order}
+                            {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : mod.order}
                           </div>
 
                           <div>
                             <h5 className="text-xs sm:text-sm font-bold text-[#3E4348] flex items-center gap-2">
                               {mod.title}
-                              {isInProgress && (
-                                <span className="text-[9px] font-mono bg-[#E8A5A5] text-white px-2 py-0.5 rounded-full font-black uppercase">
-                                  Current
-                                </span>
-                              )}
                             </h5>
-                            <p className="text-[11px] text-[#6E757C] mt-0.5 line-clamp-1">{mod.subtitle}</p>
-                            <div className="flex items-center gap-3 text-[10px] text-[#6E757C] font-mono mt-1">
-                              <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-[#A4C2F4]" /> {mod.estimatedMinutes}m drill
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Target className="w-3 h-3 text-[#E8A5A5]" /> {mod.microFocus}
-                              </span>
-                            </div>
+                            <p className="text-[11px] text-[#6E757C] line-clamp-1">{mod.subtitle}</p>
+                            <span className="text-[10px] text-[#6E757C] font-mono mt-0.5 block">
+                              {mod.estimatedMinutes}m • {mod.microFocus}
+                            </span>
                           </div>
                         </div>
 
-                        {/* Action Button */}
+                        {/* Action */}
                         <div className="w-full sm:w-auto shrink-0 flex items-center justify-end">
                           {isCompleted && (
                             <button
-                              onClick={() => onStartLesson(roadmapDiscipline, mod)}
-                              className="text-xs font-bold text-[#6E757C] hover:text-[#3E4348] bg-white px-3.5 py-1.5 rounded-2xl border border-[#E8E2D8] flex items-center gap-1.5 transition cursor-pointer"
+                              onClick={() => onStartLesson(activeDiscipline, mod)}
+                              className="text-xs font-bold text-[#6E757C] hover:text-[#3E4348] px-3 py-1 rounded-xl hover:bg-[#F7F3EE] flex items-center gap-1 transition cursor-pointer"
                             >
                               <RotateCcw className="w-3.5 h-3.5" /> Replay
                             </button>
@@ -412,16 +251,16 @@ export function LessonPlansView({
 
                           {isInProgress && (
                             <button
-                              onClick={() => onStartLesson(roadmapDiscipline, mod)}
-                              className="bg-[#A4C2F4] hover:bg-[#8bb2f2] text-[#3E4348] text-xs font-black px-4 py-2 rounded-2xl transition flex items-center gap-1.5 cursor-pointer shadow-xs transform active:scale-95"
+                              onClick={() => onStartLesson(activeDiscipline, mod)}
+                              className="bg-[#A4C2F4] hover:bg-[#8bb2f2] text-[#3E4348] text-xs font-black px-3.5 py-1.5 rounded-xl transition flex items-center gap-1 cursor-pointer shadow-xs transform active:scale-95"
                             >
-                              <Play className="w-3.5 h-3.5 fill-[#3E4348]" /> Start Drill
+                              <Play className="w-3.5 h-3.5 fill-[#3E4348]" /> Start
                             </button>
                           )}
 
                           {isLocked && (
-                            <span className="text-xs text-[#6E757C]/70 flex items-center gap-1 px-3 py-1.5 font-mono">
-                              <Lock className="w-3.5 h-3.5" /> Locked
+                            <span className="text-xs text-[#6E757C]/60 flex items-center gap-1 px-3 py-1">
+                              <Lock className="w-3.5 h-3.5" />
                             </span>
                           )}
                         </div>
@@ -434,7 +273,6 @@ export function LessonPlansView({
           );
         })}
       </div>
-
     </div>
   );
 }

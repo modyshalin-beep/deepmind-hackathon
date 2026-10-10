@@ -277,7 +277,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#F7F3EE] text-[#3E4348] flex flex-col font-sans selection:bg-[#A4C2F4]/40 selection:text-[#3E4348]">
-      {/* Top Header with Intuitive Skill Switcher Dropdown */}
+      {/* Top Header with Skill Switcher Dropdown */}
       <HeaderNav 
         coachProfile={coachProfile} 
         disciplines={disciplines}

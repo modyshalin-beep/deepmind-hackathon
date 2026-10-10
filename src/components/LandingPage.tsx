@@ -107,62 +107,62 @@ export function LandingPage({ disciplines, onStartOnboarding, onExploreDemo }: L
           </div>
         </div>
 
-        {/* 3 Visual Pillars */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full text-left">
-          <div className="bg-[#FAF9F6] border border-[#E8E2D8] rounded-3xl p-5 space-y-2 shadow-xs">
-            <div className="w-10 h-10 rounded-2xl bg-[#E8A5A5]/25 border border-[#E8A5A5]/50 flex items-center justify-center text-[#E8A5A5]">
-              <Video className="w-5 h-5" />
+        {/* 3 Visual Pillars (Un-nested) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full text-left">
+          <div className="bg-white border border-[#E8E2D8] rounded-3xl p-5 space-y-1.5 shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-[#E8A5A5]/20 flex items-center justify-center text-[#E8A5A5]">
+              <Video className="w-4 h-4" />
             </div>
             <h3 className="font-bold text-[#3E4348] text-sm">Gentle Vision Guidance</h3>
             <p className="text-xs text-[#6E757C] leading-relaxed">
-              Quietly checks posture, joint angles, and flow without judgment or stress.
+              Checks posture, joint angles, and flow in real time.
             </p>
           </div>
 
-          <div className="bg-[#FAF9F6] border border-[#E8E2D8] rounded-3xl p-5 space-y-2 shadow-xs">
-            <div className="w-10 h-10 rounded-2xl bg-[#A4C2F4]/25 border border-[#A4C2F4]/50 flex items-center justify-center text-[#30538A]">
-              <Volume2 className="w-5 h-5" />
+          <div className="bg-white border border-[#E8E2D8] rounded-3xl p-5 space-y-1.5 shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-[#A4C2F4]/20 flex items-center justify-center text-[#30538A]">
+              <Volume2 className="w-4 h-4" />
             </div>
-            <h3 className="font-bold text-[#3E4348] text-sm">AirPods Ear Cues</h3>
+            <h3 className="font-bold text-[#3E4348] text-sm">Audio Cues</h3>
             <p className="text-xs text-[#6E757C] leading-relaxed">
-              Gentle audio whispers keep you centered so you stay in the flow of your practice.
+              Quiet voice cues keep you centered in your practice.
             </p>
           </div>
 
-          <div className="bg-[#FAF9F6] border border-[#E8E2D8] rounded-3xl p-5 space-y-2 shadow-xs">
-            <div className="w-10 h-10 rounded-2xl bg-[#B5C99A]/30 border border-[#B5C99A]/50 flex items-center justify-center text-[#42592B]">
-              <CheckCircle2 className="w-5 h-5" />
+          <div className="bg-white border border-[#E8E2D8] rounded-3xl p-5 space-y-1.5 shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-[#B5C99A]/20 flex items-center justify-center text-[#42592B]">
+              <CheckCircle2 className="w-4 h-4" />
             </div>
-            <h3 className="font-bold text-[#3E4348] text-sm">Low-Pressure Progress</h3>
+            <h3 className="font-bold text-[#3E4348] text-sm">Bite-Sized Progress</h3>
             <p className="text-xs text-[#6E757C] leading-relaxed">
-              Short, bite-sized practice bursts tailored to your rhythm and comfort.
+              Calm practice bursts tailored to your rhythm.
             </p>
           </div>
         </div>
 
-        {/* Visual Skills Showcase */}
-        <div className="w-full space-y-3 text-left">
+        {/* Visual Skills Showcase (Un-nested) */}
+        <div className="w-full space-y-2.5 text-left">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#6E757C] uppercase tracking-wider">
-              Choose What You Want to Practice:
+              Choose a Skill:
             </span>
-            <span className="text-[11px] text-[#E8A5A5] font-mono font-bold">{disciplines.length} Skills Available</span>
+            <span className="text-[11px] text-[#E8A5A5] font-mono font-bold">{disciplines.length} Skills</span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
             {disciplines.map((d) => (
               <button
                 key={d.id}
                 onClick={() => onStartOnboarding(d.id)}
-                className="bg-[#FAF9F6] hover:bg-white border border-[#E8E2D8] hover:border-[#A4C2F4] rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 text-center transition group cursor-pointer shadow-xs"
+                className="bg-white hover:bg-[#FAF9F6] border border-[#E8E2D8] hover:border-[#A4C2F4] rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 text-center transition group cursor-pointer shadow-xs"
               >
-                <div className="p-2 rounded-xl bg-white border border-[#E8E2D8] group-hover:bg-[#A4C2F4]/20 transition">
+                <div className="text-lg">
                   {getDisciplineIcon(d.id)}
                 </div>
                 <span className="text-xs font-bold text-[#3E4348] group-hover:text-[#E8A5A5] transition">
                   {d.shortName || d.name}
                 </span>
-                <span className="text-[10px] text-[#6E757C] line-clamp-1">
+                <span className="text-[10px] text-[#6E757C]">
                   Coach {d.coachPersona.name.split(' ')[0]}
                 </span>
               </button>
