@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import { VideoClip, Discipline, CoachProfile } from '@/types';
 import { 
   Film, Share2, Star, Play, 
-  Sparkles, Target, BarChart3, 
-  Activity, Zap, Utensils, Heart, Music
+  BarChart3
 } from 'lucide-react';
 import { shareVideoOrCard } from '@/lib/webShare';
 
@@ -20,56 +19,29 @@ interface ReviewViewProps {
 
 export function ReviewView({
   clips,
-  disciplines,
   activeDiscipline,
   coachProfile,
   onToggleMilestone,
-  onPruneClips,
 }: ReviewViewProps) {
-  // Enrolled skills
-  const enrolledIds = coachProfile.enrolledDisciplineIds || [activeDiscipline.id];
-  const enrolledDisciplines = disciplines.filter(d => enrolledIds.includes(d.id));
-
-  // Filter by skill
-  const [selectedFilterSkillId, setSelectedFilterSkillId] = useState<string>('all');
-  
   // Sub-tab: 'clips' vs 'mastery'
   const [subView, setSubView] = useState<'clips' | 'mastery'>('clips');
 
   // Currently playing clip
   const [activePlayingClipId, setActivePlayingClipId] = useState<string | null>(null);
 
-  // Filtered clips
-  const filteredClips = selectedFilterSkillId === 'all'
-    ? clips
-    : clips.filter(c => c.disciplineId === selectedFilterSkillId);
-
-  // Discipline for mastery view
-  const targetMasteryDiscipline = selectedFilterSkillId === 'all'
-    ? activeDiscipline
-    : (disciplines.find(d => d.id === selectedFilterSkillId) || activeDiscipline);
+  // Clips filtered strictly by active discipline
+  const skillClips = clips.filter(c => c.disciplineId === activeDiscipline.id);
 
   const handleShare = async (clip: VideoClip) => {
-    const disciplineName = disciplines.find(d => d.id === clip.disciplineId)?.name || 'Sports';
     await shareVideoOrCard({
       title: `${clip.title} - Pocket Coach AI`,
-      text: `My video practice breakdown in ${disciplineName}! Coach: "${clip.coachVoiceoverText}"`,
+      text: `My video practice breakdown in ${activeDiscipline.name}! Coach: "${clip.coachVoiceoverText}"`,
       url: window.location.href,
     });
   };
 
-  const getDisciplineIcon = (id: string) => {
-    switch (id) {
-      case 'tennis': return <Activity className="w-3.5 h-3.5 text-[#E8A5A5]" />;
-      case 'boxing': return <Zap className="w-3.5 h-3.5 text-[#E9D78E]" />;
-      case 'dance': return <Sparkles className="w-3.5 h-3.5 text-[#A4C2F4]" />;
-      case 'cooking': return <Utensils className="w-3.5 h-3.5 text-[#B5C99A]" />;
-      case 'guitar': return <Music className="w-3.5 h-3.5 text-[#E8A5A5]" />;
-      case 'yoga': return <Heart className="w-3.5 h-3.5 text-[#E8A5A5]" />;
-      case 'golf': return <Target className="w-3.5 h-3.5 text-[#B5C99A]" />;
-      default: return <Activity className="w-3.5 h-3.5 text-[#A4C2F4]" />;
-    }
-  };
+  const progress = coachProfile.skillsProgress?.[activeDiscipline.id];
+  const hoursSpent = progress?.hoursSpent || 12;
 
   return (
     <div className="flex flex-col gap-5 pb-24">
@@ -77,9 +49,9 @@ export function ReviewView({
       <div className="bg-[#FAF9F6] border border-[#E8E2D8] rounded-3xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
         <div>
           <span className="text-[10px] font-mono text-[#E8A5A5] font-bold uppercase tracking-wider block">
-            Review Hub
+            {activeDiscipline.name}
           </span>
-          <h2 className="text-xl sm:text-2xl font-black text-[#3E4348]">Video Reps & Skill Analytics</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-[#3E4348]">Review & Mastery Hub</h2>
         </div>
 
         {/* Sub-view switcher */}
@@ -93,7 +65,7 @@ export function ReviewView({
             }`}
           >
             <Film className="w-3.5 h-3.5" />
-            <span>Video Clips ({filteredClips.length})</span>
+            <span>Video Clips ({skillClips.length})</span>
           </button>
 
           <button
@@ -110,51 +82,21 @@ export function ReviewView({
         </div>
       </div>
 
-      {/* ---------------- 2. SKILL FILTER PILLS ---------------- */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-        <button
-          onClick={() => setSelectedFilterSkillId('all')}
-          className={`text-xs font-bold px-3.5 py-1.5 rounded-2xl border transition shrink-0 cursor-pointer ${
-            selectedFilterSkillId === 'all'
-              ? 'bg-[#E8A5A5] text-white border-[#E8A5A5] font-black shadow-xs'
-              : 'bg-[#FAF9F6] text-[#6E757C] border-[#E8E2D8] hover:border-[#A4C2F4]'
-          }`}
-        >
-          All Enrolled Skills
-        </button>
-
-        {enrolledDisciplines.map((d) => (
-          <button
-            key={d.id}
-            onClick={() => setSelectedFilterSkillId(d.id)}
-            className={`text-xs font-bold px-3.5 py-1.5 rounded-2xl border transition shrink-0 flex items-center gap-1.5 cursor-pointer ${
-              selectedFilterSkillId === d.id
-                ? 'bg-[#E8A5A5] text-white border-[#E8A5A5] font-black shadow-xs'
-                : 'bg-[#FAF9F6] text-[#6E757C] border-[#E8E2D8] hover:border-[#A4C2F4]'
-            }`}
-          >
-            {getDisciplineIcon(d.id)}
-            <span>{d.shortName || d.name}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* ---------------- 3. SUBVIEW: VIDEO CLIPS ---------------- */}
+      {/* ---------------- 2. SUBVIEW: VIDEO CLIPS ---------------- */}
       {subView === 'clips' && (
         <div className="space-y-4">
-          {filteredClips.length === 0 ? (
+          {skillClips.length === 0 ? (
             <div className="bg-[#FAF9F6] border border-[#E8E2D8] rounded-3xl p-10 text-center space-y-2 shadow-xs">
               <Film className="w-8 h-8 text-[#E8A5A5] mx-auto" />
-              <h3 className="font-bold text-[#3E4348] text-sm">No Recorded Clips Yet</h3>
+              <h3 className="font-bold text-[#3E4348] text-sm">No Recorded Clips Yet for {activeDiscipline.name}</h3>
               <p className="text-xs text-[#6E757C] max-w-sm mx-auto">
                 Complete a practice session in Lesson Plans to capture 30 FPS video bursts and AI coach commentary.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredClips.map((clip) => {
+              {skillClips.map((clip) => {
                 const isPlaying = activePlayingClipId === clip.id;
-                const disc = disciplines.find(d => d.id === clip.disciplineId);
 
                 return (
                   <div
@@ -203,7 +145,7 @@ export function ReviewView({
                         <div>
                           <h4 className="text-sm font-bold text-[#3E4348]">{clip.title}</h4>
                           <span className="text-[11px] text-[#E8A5A5] font-mono font-bold">
-                            {disc?.name || 'Skill'} • {clip.durationSeconds}s
+                            {clip.durationSeconds}s practice rep
                           </span>
                         </div>
 
@@ -260,21 +202,21 @@ export function ReviewView({
         </div>
       )}
 
-      {/* ---------------- 4. SUBVIEW: MASTERY ANALYTICS ---------------- */}
+      {/* ---------------- 3. SUBVIEW: MASTERY ANALYTICS ---------------- */}
       {subView === 'mastery' && (
         <div className="space-y-4">
           {/* Target Skill Stats Banner */}
           <div className="bg-[#FAF9F6] border border-[#E8E2D8] rounded-3xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3">
               <img
-                src={targetMasteryDiscipline.coachPersona.avatar}
-                alt={targetMasteryDiscipline.coachPersona.name}
+                src={activeDiscipline.coachPersona.avatar}
+                alt={activeDiscipline.coachPersona.name}
                 className="w-12 h-12 rounded-full object-cover border-2 border-[#E8A5A5]"
               />
               <div>
-                <h3 className="text-base font-bold text-[#3E4348]">{targetMasteryDiscipline.name}</h3>
+                <h3 className="text-base font-bold text-[#3E4348]">{activeDiscipline.name}</h3>
                 <span className="text-xs text-[#42592B] font-mono font-bold bg-[#B5C99A]/30 px-2.5 py-0.5 rounded-full border border-[#B5C99A]/50">
-                  Coach {targetMasteryDiscipline.coachPersona.name} • {targetMasteryDiscipline.overallScore} / 10 Verified
+                  Coach {activeDiscipline.coachPersona.name} • {activeDiscipline.overallScore} / 10 Verified
                 </span>
               </div>
             </div>
@@ -282,7 +224,7 @@ export function ReviewView({
             <div className="bg-[#F7F3EE] px-4 py-2 rounded-2xl border border-[#E8E2D8] text-right">
               <span className="text-[10px] text-[#6E757C] uppercase font-mono block">Deliberate Practice</span>
               <span className="text-base font-black text-[#3E4348]">
-                {coachProfile.skillsProgress?.[targetMasteryDiscipline.id]?.hoursSpent || 12}h logged
+                {hoursSpent}h logged
               </span>
             </div>
           </div>
@@ -294,7 +236,7 @@ export function ReviewView({
             </h4>
 
             <div className="space-y-3">
-              {targetMasteryDiscipline.subcomponents.map((sub) => (
+              {activeDiscipline.subcomponents.map((sub) => (
                 <div key={sub.id} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-[#3E4348]">{sub.name}</span>
@@ -317,7 +259,7 @@ export function ReviewView({
               Coach Prescription
             </h4>
             <p className="text-xs text-[#3E4348] leading-relaxed">
-              &quot;We are locking in your strengths while targeting <strong className="text-[#E8A5A5]">{targetMasteryDiscipline.microFocus}</strong>. Every practice session is calibrated to build muscle memory through deliberate, sub-second feedback.&quot;
+              &quot;Focusing on <strong className="text-[#E8A5A5]">{activeDiscipline.microFocus}</strong>. Every drill reinforces sub-second reaction timing and repeatable biomechanics.&quot;
             </p>
           </div>
         </div>

@@ -26,7 +26,7 @@ export function BottomTabs({ activeTab, onChangeTab, unreadClipsCount }: BottomT
             <button
               key={tab.id}
               onClick={() => onChangeTab(tab.id)}
-              className={`flex-1 flex flex-col items-center gap-1 py-1.5 px-3 rounded-2xl transition-all relative cursor-pointer ${
+              className={`flex-1 flex flex-col items-center gap-1.5 py-1.5 px-4 rounded-2xl transition-all relative cursor-pointer ${
                 isActive
                   ? 'text-[#3E4348] font-black scale-105'
                   : 'text-[#6E757C] hover:text-[#3E4348] font-medium'

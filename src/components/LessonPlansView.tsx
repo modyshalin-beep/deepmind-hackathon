@@ -5,7 +5,7 @@ import { Discipline, CoachProfile, CourseModule } from '@/types';
 import { 
   Play, CheckCircle2, Lock, Clock, BookOpen, 
   ArrowRight, Plus, Activity, Utensils, Heart, Target, 
-  RotateCcw, Zap, Music, Sparkles
+  RotateCcw, Zap, Music, Sparkles, ChevronDown, ChevronUp
 } from 'lucide-react';
 
 interface LessonPlansViewProps {
@@ -53,6 +53,57 @@ export function LessonPlansView({
     }
   };
 
+  // Group modules into stages
+  const stages: { stageNumber: number; title: string; modules: CourseModule[] }[] = [];
+  const allModules = roadmapDiscipline.modules || [];
+  
+  if (allModules.length <= 3) {
+    stages.push({
+      stageNumber: 1,
+      title: 'Stage 1: Core Setup & Fundamentals',
+      modules: allModules.slice(0, 2),
+    });
+    if (allModules.length > 2) {
+      stages.push({
+        stageNumber: 2,
+        title: 'Stage 2: Fluid Execution & Precision',
+        modules: allModules.slice(2),
+      });
+    }
+  } else {
+    stages.push({
+      stageNumber: 1,
+      title: 'Stage 1: Foundation & Posture',
+      modules: allModules.slice(0, 2),
+    });
+    stages.push({
+      stageNumber: 2,
+      title: 'Stage 2: Technique & Control',
+      modules: allModules.slice(2, 4),
+    });
+    if (allModules.length > 4) {
+      stages.push({
+        stageNumber: 3,
+        title: 'Stage 3: Fluid Speed & Game Mechanics',
+        modules: allModules.slice(4),
+      });
+    }
+  }
+
+  // Expanded stages state (default all open or active open)
+  const [expandedStages, setExpandedStages] = useState<Record<number, boolean>>({
+    1: true,
+    2: true,
+    3: true,
+  });
+
+  const toggleStage = (stageNum: number) => {
+    setExpandedStages(prev => ({
+      ...prev,
+      [stageNum]: !prev[stageNum]
+    }));
+  };
+
   return (
     <div className="flex flex-col gap-6 pb-24">
       {/* ---------------- 1. TOP STATS BAR ---------------- */}
@@ -85,7 +136,7 @@ export function LessonPlansView({
             <div className="space-y-2.5 flex-1">
               <div className="flex items-center gap-2">
                 <span className="bg-[#E8A5A5] text-white text-[10px] font-black uppercase px-3 py-1 rounded-full flex items-center gap-1 shadow-xs">
-                  <Play className="w-2.5 h-2.5 fill-white" /> Up Next
+                  <Play className="w-2.5 h-2.5 fill-white" /> Up Next Drill
                 </span>
                 <span className="text-xs font-semibold text-[#E8A5A5]">
                   {roadmapDiscipline.name} • Module {activeModule.order} of {roadmapDiscipline.modules?.length || 3}
@@ -235,93 +286,155 @@ export function LessonPlansView({
         </div>
       </div>
 
-      {/* ---------------- 4. MODULES TIMELINE ROADMAP ---------------- */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
+      {/* ---------------- 4. COLLAPSIBLE STAGES CURRICULUM ---------------- */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1">
           <h3 className="text-base font-black text-[#3E4348] flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-[#A4C2F4]" />
-            {roadmapDiscipline.name} Modules
+            Curriculum Roadmap: {roadmapDiscipline.name}
           </h3>
-          <span className="text-xs text-[#6E757C]">
-            {roadmapDiscipline.modules?.length || 3} progressive modules
+          <span className="text-xs text-[#6E757C] font-mono">
+            {stages.length} Stages • Tap to expand/collapse
           </span>
         </div>
 
-        <div className="space-y-2.5">
-          {roadmapDiscipline.modules?.map((mod) => {
-            const isCompleted = mod.status === 'completed';
-            const isInProgress = mod.status === 'in_progress';
-            const isLocked = mod.status === 'locked';
+        {stages.map((stage) => {
+          const isExpanded = expandedStages[stage.stageNumber];
+          const stageCompleted = stage.modules.every(m => m.status === 'completed');
+          const stageInProgress = stage.modules.some(m => m.status === 'in_progress');
+          const completedInStage = stage.modules.filter(m => m.status === 'completed').length;
 
-            return (
-              <div
-                key={mod.id}
-                className={`p-4 rounded-3xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition ${
-                  isInProgress
-                    ? 'bg-[#FAF9F6] border-[#E8A5A5] shadow-xs ring-1 ring-[#E8A5A5]/30'
-                    : isCompleted
-                    ? 'bg-[#FAF9F6] border-[#E8E2D8]'
-                    : 'bg-[#F7F3EE]/60 border-[#E8E2D8]/60 opacity-60'
-                }`}
+          return (
+            <div 
+              key={stage.stageNumber} 
+              className="bg-[#FAF9F6] border border-[#E8E2D8] rounded-3xl overflow-hidden transition-all shadow-xs"
+            >
+              {/* Collapsible Header */}
+              <button
+                onClick={() => toggleStage(stage.stageNumber)}
+                className="w-full p-4 flex items-center justify-between text-left hover:bg-white transition cursor-pointer"
               >
-                <div className="flex items-start gap-3 flex-1">
-                  <div className={`w-8 h-8 rounded-2xl flex items-center justify-center shrink-0 border text-xs font-bold ${
-                    isCompleted
+                <div className="flex items-center gap-3">
+                  <span className={`w-7 h-7 rounded-2xl text-[11px] font-mono font-bold flex items-center justify-center border ${
+                    stageCompleted
                       ? 'bg-[#B5C99A]/30 border-[#B5C99A] text-[#42592B]'
-                      : isInProgress
-                      ? 'bg-[#E8A5A5] border-[#E8A5A5] text-white'
+                      : stageInProgress
+                      ? 'bg-[#A4C2F4] border-[#A4C2F4] text-[#3E4348]'
                       : 'bg-[#F7F3EE] border-[#E8E2D8] text-[#6E757C]'
                   }`}>
-                    {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : mod.order}
-                  </div>
-
+                    {stageCompleted ? '✓' : stage.stageNumber}
+                  </span>
+                  
                   <div>
                     <h4 className="text-sm font-bold text-[#3E4348] flex items-center gap-2">
-                      {mod.title}
-                      {isInProgress && (
-                        <span className="text-[9px] font-mono bg-[#E8A5A5] text-white px-2.5 py-0.5 rounded-full font-black uppercase">
-                          Current
+                      {stage.title}
+                      {stageInProgress && (
+                        <span className="text-[9px] font-mono bg-[#E8A5A5]/25 text-[#9E3E3E] border border-[#E8A5A5]/50 px-2 py-0.5 rounded-full font-bold uppercase">
+                          Active Stage
                         </span>
                       )}
                     </h4>
-                    <p className="text-xs text-[#6E757C] mt-0.5 line-clamp-1">{mod.subtitle}</p>
-                    <span className="text-[10px] text-[#6E757C]/80 font-mono mt-1 block">
-                      Target: {mod.microFocus} • {mod.estimatedMinutes} mins
+                    <span className="text-[11px] text-[#6E757C] font-mono">
+                      {completedInStage} of {stage.modules.length} Modules Completed
                     </span>
                   </div>
                 </div>
 
-                {/* Button Action */}
-                <div className="w-full sm:w-auto shrink-0 flex items-center justify-end">
-                  {isCompleted && (
-                    <button
-                      onClick={() => onStartLesson(roadmapDiscipline, mod)}
-                      className="text-xs font-bold text-[#6E757C] hover:text-[#3E4348] bg-[#F7F3EE] px-3.5 py-1.5 rounded-2xl border border-[#E8E2D8] flex items-center gap-1.5 transition cursor-pointer"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" /> Replay
-                    </button>
-                  )}
-
-                  {isInProgress && (
-                    <button
-                      onClick={() => onStartLesson(roadmapDiscipline, mod)}
-                      className="bg-[#A4C2F4] hover:bg-[#8bb2f2] text-[#3E4348] text-xs font-black px-4 py-2 rounded-2xl transition flex items-center gap-1.5 cursor-pointer shadow-xs transform active:scale-95"
-                    >
-                      <Play className="w-3.5 h-3.5 fill-[#3E4348]" /> Start Lesson
-                    </button>
-                  )}
-
-                  {isLocked && (
-                    <span className="text-xs text-[#6E757C]/70 flex items-center gap-1 px-3 py-1.5 font-mono">
-                      <Lock className="w-3.5 h-3.5" /> Locked
-                    </span>
-                  )}
+                <div className="flex items-center gap-2 text-[#6E757C]">
+                  <span className="text-xs font-mono hidden sm:inline">
+                    {isExpanded ? 'Collapse' : 'Expand'}
+                  </span>
+                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              </button>
+
+              {/* Collapsible Module List */}
+              {isExpanded && (
+                <div className="p-4 pt-1 border-t border-[#E8E2D8] space-y-2.5 bg-[#F7F3EE]/50">
+                  {stage.modules.map((mod) => {
+                    const isCompleted = mod.status === 'completed';
+                    const isInProgress = mod.status === 'in_progress';
+                    const isLocked = mod.status === 'locked';
+
+                    return (
+                      <div
+                        key={mod.id}
+                        className={`p-3.5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition ${
+                          isInProgress
+                            ? 'bg-[#FAF9F6] border-[#E8A5A5] shadow-xs ring-1 ring-[#E8A5A5]/40'
+                            : isCompleted
+                            ? 'bg-[#FAF9F6] border-[#E8E2D8]'
+                            : 'bg-[#F7F3EE]/60 border-[#E8E2D8]/60 opacity-60'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border text-xs font-bold ${
+                            isCompleted
+                              ? 'bg-[#B5C99A]/30 border-[#B5C99A] text-[#42592B]'
+                              : isInProgress
+                              ? 'bg-[#E8A5A5] border-[#E8A5A5] text-white'
+                              : 'bg-[#F7F3EE] border-[#E8E2D8] text-[#6E757C]'
+                          }`}>
+                            {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : mod.order}
+                          </div>
+
+                          <div>
+                            <h5 className="text-xs sm:text-sm font-bold text-[#3E4348] flex items-center gap-2">
+                              {mod.title}
+                              {isInProgress && (
+                                <span className="text-[9px] font-mono bg-[#E8A5A5] text-white px-2 py-0.5 rounded-full font-black uppercase">
+                                  Current
+                                </span>
+                              )}
+                            </h5>
+                            <p className="text-[11px] text-[#6E757C] mt-0.5 line-clamp-1">{mod.subtitle}</p>
+                            <div className="flex items-center gap-3 text-[10px] text-[#6E757C] font-mono mt-1">
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-[#A4C2F4]" /> {mod.estimatedMinutes}m drill
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Target className="w-3 h-3 text-[#E8A5A5]" /> {mod.microFocus}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Button */}
+                        <div className="w-full sm:w-auto shrink-0 flex items-center justify-end">
+                          {isCompleted && (
+                            <button
+                              onClick={() => onStartLesson(roadmapDiscipline, mod)}
+                              className="text-xs font-bold text-[#6E757C] hover:text-[#3E4348] bg-white px-3.5 py-1.5 rounded-2xl border border-[#E8E2D8] flex items-center gap-1.5 transition cursor-pointer"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" /> Replay
+                            </button>
+                          )}
+
+                          {isInProgress && (
+                            <button
+                              onClick={() => onStartLesson(roadmapDiscipline, mod)}
+                              className="bg-[#A4C2F4] hover:bg-[#8bb2f2] text-[#3E4348] text-xs font-black px-4 py-2 rounded-2xl transition flex items-center gap-1.5 cursor-pointer shadow-xs transform active:scale-95"
+                            >
+                              <Play className="w-3.5 h-3.5 fill-[#3E4348]" /> Start Drill
+                            </button>
+                          )}
+
+                          {isLocked && (
+                            <span className="text-xs text-[#6E757C]/70 flex items-center gap-1 px-3 py-1.5 font-mono">
+                              <Lock className="w-3.5 h-3.5" /> Locked
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
+
     </div>
   );
 }

@@ -414,7 +414,7 @@ export function OnboardingModal({
           <div className="space-y-4">
             <div className="text-center space-y-1">
               <div className="inline-flex items-center gap-1.5 bg-[#B5C99A]/30 text-[#42592B] border border-[#B5C99A]/50 text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider">
-                <Sparkles className="w-3 h-3" /> Syllabus Configured
+                <Sparkles className="w-3.5 h-3.5" /> Syllabus Configured
               </div>
               <h2 className="text-2xl font-black text-[#3E4348]">
                 Meet Coach {currentAssessingDiscipline.coachPersona.name}
