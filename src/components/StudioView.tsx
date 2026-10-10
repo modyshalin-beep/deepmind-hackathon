@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Discipline, SessionReport, SkillLevel } from '@/types';
 import { CoachHaloStatus, LessonPhase, ConversationalExchange, speakCoachFeedback, stopCoachSpeaking, primeSpeechSynthesis, generateCoachResponseToUserSpeech, generateLiveSessionReport } from '@/lib/geminiLiveSimulator';
 import { AudioWaveform } from '@/components/AudioWaveform';
-import { Camera, Video, Volume2, Mic, MicOff, Sparkles, Award, ArrowRight, Zap, Play, Square, Pause, ShieldCheck, Flame, CheckCircle2, Clock, BookOpen, Settings, MessageSquare, HelpCircle, Eye, AlertCircle, Send, VolumeX, RotateCcw, ScanLine, ChevronRight } from 'lucide-react';
+import { Camera, Video, Volume2, Mic, MicOff, Sparkles, Award, ArrowRight, Zap, Play, Square, Pause, ShieldCheck, Flame, CheckCircle2, Clock, BookOpen, Settings, MessageSquare, HelpCircle, Eye, AlertCircle, Send, VolumeX, RotateCcw, ScanLine, ChevronRight, Activity } from 'lucide-react';
 
 interface StudioViewProps {
   disciplines: Discipline[];
@@ -26,6 +26,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
   const [customVoiceInput, setCustomVoiceInput] = useState<string>('');
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const isRecordingAudioRef = useRef<boolean>(false);
+  const [motionState, setMotionState] = useState<'idle' | 'moving' | 'settled'>('idle');
   const [activeVisionFeedback, setActiveVisionFeedback] = useState<{
     praisePoint: string;
     correctionPoint: string;
@@ -45,6 +46,15 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const latestSpeechTranscriptRef = useRef<string>('');
+  
+  // Motion Engine Refs
+  const motionCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const prevPixelFrameRef = useRef<Uint8ClampedArray | null>(null);
+  const animFrameIdRef = useRef<number | null>(null);
+  const lastCaptureTimeRef = useRef<number>(0);
+  const settleStartTimeRef = useRef<number | null>(null);
+  const isMovingRef = useRef<boolean>(false);
+
   const lessonTimerRef = useRef<NodeJS.Timeout | null>(null);
   const stepPacingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const handsFreeSilenceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -80,7 +90,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     speakCoachFeedback("Hello! This is Coach Maya testing voice output.");
   };
 
-  // Capture live video frame from camera canvas
+  // Capture live video frame from main camera video feed
   const captureCameraFrameBase64 = (): string | null => {
     if (!videoRef.current) return null;
     try {
@@ -97,7 +107,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     }
   };
 
-  // Perform Gemini Vision Camera Frame Inspection
+  // Perform Gemini Vision Camera Frame Inspection (Respects Audio Non-Interference)
   const analyzeCameraFrameWithGeminiVision = async (userPromptText: string = '', speakOutLoud: boolean = false) => {
     const frameBase64 = captureCameraFrameBase64();
     const savedKey = typeof window !== 'undefined' ? localStorage.getItem('pocket_coach_gemini_key') || '' : '';
@@ -121,10 +131,11 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
         praisePoint: data.praisePoint,
         correctionPoint: data.correctionPoint,
         alignmentScore: data.alignmentScore,
-        title: `Camera Analysis: ${activeDiscipline.name}`,
+        title: `Camera Inspection: ${activeDiscipline.name}`,
       });
 
-      if (speakOutLoud && !isRecordingAudioRef.current) {
+      // NON-INTERFERENCE GUARD: Only speak if explicitly allowed AND channel is quiet!
+      if (speakOutLoud && !isRecordingAudioRef.current && !isCoachSpeakingRef.current) {
         const spokenFeedback = data.coachSpeech || `I see your posture on camera! Alignment looks solid.`;
         stopCoachSpeaking();
         setHaloStatus('coach_speaking');
@@ -149,6 +160,89 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
       if (haloStatus === 'burst_capturing') setHaloStatus('ready');
     }
   };
+
+  // Real-Time Pixel-Delta Motion Detection Loop (Runs on low-res 64x64 hidden canvas)
+  const runMotionDetectionLoop = useCallback(() => {
+    if (!videoRef.current || !isLessonActiveRef.current) return;
+
+    if (!motionCanvasRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      motionCanvasRef.current = canvas;
+    }
+
+    const canvas = motionCanvasRef.current;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    if (ctx && videoRef.current.readyState >= 2) {
+      ctx.drawImage(videoRef.current, 0, 0, 64, 64);
+      const frameData = ctx.getImageData(0, 0, 64, 64).data;
+
+      if (prevPixelFrameRef.current) {
+        let pixelDeltaSum = 0;
+        const prevData = prevPixelFrameRef.current;
+
+        // Sample every 4th byte (RGB diff)
+        for (let i = 0; i < frameData.length; i += 8) {
+          const diffR = Math.abs(frameData[i] - prevData[i]);
+          const diffG = Math.abs(frameData[i + 1] - prevData[i + 1]);
+          const diffB = Math.abs(frameData[i + 2] - prevData[i + 2]);
+          pixelDeltaSum += diffR + diffG + diffB;
+        }
+
+        const avgDelta = pixelDeltaSum / (64 * 64);
+        const now = Date.now();
+        const MOTION_THRESHOLD = 8.5; // Sensitivity threshold for motion vs still
+        const COOLDOWN_MS = 9000; // Minimum 9s between peak camera captures
+
+        if (avgDelta > MOTION_THRESHOLD) {
+          // Movement detected
+          isMovingRef.current = true;
+          settleStartTimeRef.current = null;
+          setMotionState('moving');
+        } else if (isMovingRef.current) {
+          // Motion dropped below threshold -> User is settling into posture/stance!
+          if (!settleStartTimeRef.current) {
+            settleStartTimeRef.current = now;
+          } else if (now - settleStartTimeRef.current >= 1100) {
+            // User held still for 1.1s -> SETTLED STANCE CONFIRMED!
+            isMovingRef.current = false;
+            settleStartTimeRef.current = null;
+            setMotionState('settled');
+
+            // Trigger peak keyframe capture if cooldown elapsed and not recording voice
+            if (now - lastCaptureTimeRef.current >= COOLDOWN_MS && !isRecordingAudioRef.current) {
+              lastCaptureTimeRef.current = now;
+              setAutoBurstsCount(prev => prev + 1);
+              analyzeCameraFrameWithGeminiVision('', true); // Speak pose correction when settled!
+            }
+          }
+        } else {
+          setMotionState('idle');
+        }
+      }
+
+      prevPixelFrameRef.current = new Uint8ClampedArray(frameData);
+    }
+
+    animFrameIdRef.current = requestAnimationFrame(runMotionDetectionLoop);
+  }, []);
+
+  // Start/Stop Motion Detection Loop when lesson is active
+  useEffect(() => {
+    if (isLessonActive && !isPaused) {
+      animFrameIdRef.current = requestAnimationFrame(runMotionDetectionLoop);
+    } else {
+      if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
+      prevPixelFrameRef.current = null;
+      setMotionState('idle');
+    }
+
+    return () => {
+      if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
+    };
+  }, [isLessonActive, isPaused, runMotionDetectionLoop]);
 
   // Enumerate Mics
   const enumerateMicDevices = async () => {
@@ -265,7 +359,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     };
   }, []);
 
-  // Lesson Timer
+  // Lesson Second Timer
   useEffect(() => {
     isLessonActiveRef.current = isLessonActive;
 
@@ -289,11 +383,10 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     };
   }, [isLessonActive, isPaused]);
 
-  // UN-RESETTABLE Step Advancement Engine (NEVER speaks while user is recording!)
+  // UN-RESETTABLE Step Advancement Engine (Only ticks when quiet and not recording)
   useEffect(() => {
     if (isLessonActive && !isPaused) {
       stepPacingTimerRef.current = setInterval(() => {
-        // STRICT CHECK: Only tick if NOT recording audio and NOT coach speaking!
         if (!isRecordingAudioRef.current && !isCoachSpeakingRef.current) {
           timeInCurrentStepRef.current += 1;
 
@@ -306,6 +399,19 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
               setCurrentStepIndex(nextIdx);
               const cleanText = formatCleanStepText(activeDiscipline.beginnerStepByStepPrep[nextIdx]);
               const message = `Step ${nextIdx + 1}: ${cleanText}`;
+              setCurrentCoachSpeech(message);
+              speakCoachFeedback(message);
+              analyzeCameraFrameWithGeminiVision('', false);
+            } else {
+              // Flows smoothly into Full Posture Practice Hold!
+              const flowMessages = [
+                `All 15 prep steps verified on camera! Holding full ${activeDiscipline.prescribedDrill} posture hold. Inhale long, exhale deep!`,
+                `I see your form on camera! Maintain parallel arm extension and keep gaze focused forward over fingertips.`,
+                `Awesome posture stamina! Hold deep alignment and sink 1 inch lower into your front leg.`,
+                `Fantastic practice! You have mastered all step-by-step alignment drills for ${activeDiscipline.name}.`
+              ];
+              const randomIndex = Math.floor(Math.random() * flowMessages.length);
+              const message = flowMessages[randomIndex];
               setCurrentCoachSpeech(message);
               speakCoachFeedback(message);
               analyzeCameraFrameWithGeminiVision('', false);
@@ -343,12 +449,12 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
   const startAudioRecording = () => {
     if (!activeStream) return;
 
-    // 1. HARD SHUTDOWN ALL SPEECH INSTANTLY
+    // HARD SHUTDOWN ALL SPEECH INSTANTLY
     stopCoachSpeaking();
     isCoachSpeakingRef.current = false;
     setIsRecordingAudio(true);
     isRecordingAudioRef.current = true;
-    timeInCurrentStepRef.current = 0; // Freeze step timer while recording!
+    timeInCurrentStepRef.current = 0;
 
     primeSpeechSynthesis();
     setHaloStatus('user_speaking');
@@ -446,6 +552,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     setActiveVisionFeedback(null);
     setConversations([]);
     setHaloStatus('ready');
+    setMotionState('idle');
   };
 
   // Voice Activity Detection
@@ -526,7 +633,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
     isLessonActiveRef.current = true;
 
     const step1 = formatCleanStepText(activeDiscipline.beginnerStepByStepPrep[0] || 'Place your feet 4 feet apart.');
-    const welcome = `Welcome to live ${activeDiscipline.name}! Step 1: ${step1} Hold the mic button or speak whenever set!`;
+    const welcome = `Welcome to live ${activeDiscipline.name}! Step 1: ${step1} Move into position—I will inspect your camera posture when you settle!`;
 
     setCurrentCoachSpeech(welcome);
     await speakCoachFeedback(welcome);
@@ -564,7 +671,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold tracking-wider text-emerald-400 uppercase flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" /> 15-Step Live Lesson Active
+                <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" /> Motion-Settle Camera Engine Active
               </span>
               <span className="text-[10px] font-black uppercase bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded-full">
                 {skillLevel} Level
@@ -652,7 +759,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
             </div>
 
             <p className="text-[11px] text-slate-300 italic">
-              👉 Hold <strong className="text-emerald-300">&quot;Hold Button to Speak&quot;</strong> — coach stops immediately to listen to your question!
+              🏃 Move into position—when you settle into pose, Gemini 2.5 Flash automatically captures & inspects your joint alignment!
             </p>
           </div>
         )}
@@ -675,6 +782,28 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
           </div>
         )}
 
+        {/* Motion Settle Status Badge Overlay */}
+        {isLessonActive && (
+          <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+            <div className={`text-[11px] font-extrabold px-3 py-1.5 rounded-full border backdrop-blur-md flex items-center gap-1.5 shadow-lg ${
+              motionState === 'moving'
+                ? 'bg-amber-950/90 text-amber-300 border-amber-700 animate-pulse'
+                : motionState === 'settled'
+                ? 'bg-emerald-950/90 text-emerald-300 border-emerald-700'
+                : 'bg-slate-900/80 text-slate-300 border-slate-700'
+            }`}>
+              <Activity className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                {motionState === 'moving'
+                  ? '🟡 Motion Detected... Move into Pose'
+                  : motionState === 'settled'
+                  ? '🟢 Pose Settled — Gemini Vision Capture'
+                  : '⚪ Ready in Position'}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Halo Border Overlay */}
         <div className={`absolute inset-0 pointer-events-none rounded-2xl border-4 transition-all duration-300 ${
           haloStatus === 'user_speaking'
@@ -687,7 +816,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
         }`} />
 
         {/* Live Soundwave Audio Header */}
-        <div className="absolute top-4 inset-x-4 flex justify-between items-center z-10">
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
           <AudioWaveform
             stream={activeStream}
             isListening={isLessonActive}
@@ -704,7 +833,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
               }}
               className="bg-rose-500/90 hover:bg-rose-400 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5 pointer-events-auto border border-rose-400"
             >
-              <VolumeX className="w-3.5 h-3.5" /> Interrupt Coach Now
+              <VolumeX className="w-3.5 h-3.5" /> Interrupt
             </button>
           )}
         </div>
@@ -725,7 +854,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
               <div className="bg-emerald-950/80 p-2 rounded-xl border border-emerald-800/80 flex items-start gap-2 text-emerald-200">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-emerald-300 block text-[10px] uppercase">On-Camera Strength:</strong>
+                  <strong className="text-emerald-300 block text-[10px] uppercase">On-Camera Joint Strength:</strong>
                   <span>{activeVisionFeedback.praisePoint}</span>
                 </div>
               </div>
@@ -733,7 +862,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
               <div className="bg-amber-950/80 p-2 rounded-xl border border-amber-800/80 flex items-start gap-2 text-amber-200">
                 <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-amber-300 block text-[10px] uppercase">Camera Form Correction:</strong>
+                  <strong className="text-amber-300 block text-[10px] uppercase">Camera Joint Correction:</strong>
                   <span>{activeVisionFeedback.correctionPoint}</span>
                 </div>
               </div>
@@ -763,7 +892,7 @@ export function StudioView({ disciplines, activeDiscipline, skillLevel, onSelect
         <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 space-y-3">
           <div className="flex items-center justify-between text-xs text-slate-400 font-bold uppercase tracking-wider">
             <span>🗣️ Push-to-Talk Microphone & Question Shortcuts:</span>
-            <span className="text-emerald-400 text-[10px] font-mono">Strict Recording Silence Guard Active</span>
+            <span className="text-emerald-400 text-[10px] font-mono">Pixel-Delta Settle Engine Active</span>
           </div>
 
           <div className="flex items-center gap-2">
