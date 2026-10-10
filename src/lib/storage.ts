@@ -11,7 +11,7 @@ const MAX_STORAGE_MB = 1024; // 1 GB simulated storage cap
 export const DEMO_USER: UserAccount = {
   id: 'usr-demo-1',
   name: 'Alex Rivera',
-  email: 'alex@pocketcoach.ai',
+  email: 'alex@tenk.ai',
   skillLevel: 'beginner',
   primaryDisciplineId: 'yoga',
   createdAt: '2026-09-01T08:00:00Z',
