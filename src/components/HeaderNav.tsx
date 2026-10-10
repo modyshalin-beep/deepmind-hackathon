@@ -5,7 +5,7 @@ import { CoachProfile, Discipline } from '@/types';
 import { 
   ChevronDown, Plus, Check, 
   Activity, Zap, Utensils, Heart, Target, Music, Sparkles,
-  User, LogOut
+  User, LogOut, Key
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
@@ -31,6 +31,25 @@ export function HeaderNav({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Gemini API key support from origin/main
+  const [apiKey, setApiKey] = useState('');
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('pocket_coach_gemini_key') || '';
+    setApiKey(saved);
+  }, []);
+
+  const handleSaveKey = (val: string) => {
+    setApiKey(val);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pocket_coach_gemini_key', val);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
+    }
+  };
 
   const studentName = user?.name || coachProfile.studentName || 'Athlete';
   const initial = studentName.charAt(0).toUpperCase();
@@ -137,44 +156,75 @@ export function HeaderNav({
           )}
         </div>
 
-        {/* Athlete Profile */}
-        <div className="relative">
-          <button
-            onClick={() => setShowUserMenu(!showUserMenu)}
-            className="bg-[#FAF9F6] hover:bg-white border border-[#E8E2D8] hover:border-[#A4C2F4] pl-1.5 pr-2.5 py-1 rounded-full flex items-center gap-2 transition cursor-pointer shadow-xs"
-          >
-            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#A4C2F4] to-[#E8A5A5] text-[#3E4348] font-black text-xs flex items-center justify-center">
-              {initial}
-            </div>
-            <span className="text-xs font-bold text-[#3E4348] hidden sm:inline max-w-[100px] truncate">
-              {studentName}
-            </span>
-            <ChevronDown className="w-3 h-3 text-[#6E757C]" />
-          </button>
-
-          {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-[#FAF9F6] border border-[#E8E2D8] rounded-2xl p-1.5 shadow-xl z-50 animate-fade-in space-y-0.5">
-              <div className="px-3 py-1.5 border-b border-[#E8E2D8]">
-                <p className="text-xs font-bold text-[#3E4348] truncate">{studentName}</p>
-                {user?.email && <p className="text-[10px] text-[#6E757C] font-mono truncate">{user.email}</p>}
-              </div>
-
-              <Link
-                href="/sign-in"
-                onClick={() => setShowUserMenu(false)}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#3E4348] hover:bg-white rounded-xl transition"
-              >
-                <User className="w-3.5 h-3.5 text-[#A4C2F4]" /> Switch Profile
-              </Link>
-
+        {/* Right Section: API Key & Athlete Profile */}
+        <div className="flex items-center gap-2">
+          {/* Gemini API Key Button */}
+          {showKeyInput ? (
+            <div className="flex items-center gap-1 bg-white p-1 rounded-2xl border border-[#E8E2D8] shadow-xs">
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => handleSaveKey(e.target.value)}
+                placeholder="Paste Gemini Key"
+                className="bg-transparent text-xs text-[#3E4348] px-2 py-1 focus:outline-none w-32 sm:w-40 font-mono placeholder-[#6E757C]/60"
+              />
               <button
-                onClick={handleSignOut}
-                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition text-left cursor-pointer"
+                onClick={() => setShowKeyInput(false)}
+                className="bg-[#A4C2F4] text-[#3E4348] text-xs font-bold px-2 py-1 rounded-xl cursor-pointer"
               >
-                <LogOut className="w-3.5 h-3.5" /> Sign Out
+                {isSaved ? <Check className="w-3.5 h-3.5" /> : 'Done'}
               </button>
             </div>
+          ) : (
+            <button
+              onClick={() => setShowKeyInput(true)}
+              className="bg-[#FAF9F6] hover:bg-white border border-[#E8E2D8] text-[#6E757C] hover:text-[#3E4348] text-xs font-semibold px-2.5 py-1.5 rounded-full flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+              title="Configure Gemini API Key"
+            >
+              <Key className="w-3.5 h-3.5 text-[#E9D78E]" />
+              <span className="hidden sm:inline">{apiKey ? 'API Key Active' : 'Gemini Key'}</span>
+            </button>
           )}
+
+          {/* Athlete Profile Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="bg-[#FAF9F6] hover:bg-white border border-[#E8E2D8] hover:border-[#A4C2F4] pl-1.5 pr-2.5 py-1 rounded-full flex items-center gap-2 transition cursor-pointer shadow-xs"
+            >
+              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#A4C2F4] to-[#E8A5A5] text-[#3E4348] font-black text-xs flex items-center justify-center">
+                {initial}
+              </div>
+              <span className="text-xs font-bold text-[#3E4348] hidden sm:inline max-w-[100px] truncate">
+                {studentName}
+              </span>
+              <ChevronDown className="w-3 h-3 text-[#6E757C]" />
+            </button>
+
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#FAF9F6] border border-[#E8E2D8] rounded-2xl p-1.5 shadow-xl z-50 animate-fade-in space-y-0.5">
+                <div className="px-3 py-1.5 border-b border-[#E8E2D8]">
+                  <p className="text-xs font-bold text-[#3E4348] truncate">{studentName}</p>
+                  {user?.email && <p className="text-[10px] text-[#6E757C] font-mono truncate">{user.email}</p>}
+                </div>
+
+                <Link
+                  href="/sign-in"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#3E4348] hover:bg-white rounded-xl transition"
+                >
+                  <User className="w-3.5 h-3.5 text-[#A4C2F4]" /> Switch Profile
+                </Link>
+
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition text-left cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5" /> Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
       </div>
