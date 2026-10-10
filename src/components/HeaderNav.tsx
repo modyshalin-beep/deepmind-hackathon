@@ -1,24 +1,45 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { CoachProfile } from '@/types';
-import { Headphones, Battery, Key, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { CoachProfile, Discipline } from '@/types';
+import { 
+  ChevronDown, Plus, Check, 
+  Activity, Zap, Utensils, Heart, Target, Music, Sparkles,
+  User, LogOut, Key
+} from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
 
 interface HeaderNavProps {
   coachProfile: CoachProfile;
-  activeTab: string;
+  disciplines: Discipline[];
+  activeDiscipline: Discipline;
+  onSelectDiscipline: (d: Discipline) => void;
+  onOpenAddSkill: () => void;
+  onShowLanding?: () => void;
 }
 
-export function HeaderNav({ coachProfile, activeTab }: HeaderNavProps) {
-  const [apiKey, setApiKey] = useState<string>('');
-  const [showKeyInput, setShowKeyInput] = useState<boolean>(false);
-  const [isSaved, setIsSaved] = useState<boolean>(false);
+export function HeaderNav({
+  coachProfile,
+  disciplines,
+  activeDiscipline,
+  onSelectDiscipline,
+  onOpenAddSkill,
+  onShowLanding,
+}: HeaderNavProps) {
+  const { user, signOutUser } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Gemini API key support from origin/main
+  const [apiKey, setApiKey] = useState('');
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('pocket_coach_gemini_key');
-      if (saved) setApiKey(saved);
-    }
+    const saved = localStorage.getItem('pocket_coach_gemini_key') || '';
+    setApiKey(saved);
   }, []);
 
   const handleSaveKey = (val: string) => {
@@ -30,39 +51,126 @@ export function HeaderNav({ coachProfile, activeTab }: HeaderNavProps) {
     }
   };
 
+  const studentName = user?.name || coachProfile.studentName || 'Athlete';
+  const initial = studentName.charAt(0).toUpperCase();
+
+  const enrolledIds = coachProfile.enrolledDisciplineIds || [activeDiscipline.id];
+  const enrolledDisciplines = disciplines.filter(d => enrolledIds.includes(d.id));
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSignOut = () => {
+    setShowUserMenu(false);
+    signOutUser();
+    window.location.href = '/sign-in';
+  };
+
+  const getDisciplineIcon = (id: string) => {
+    switch (id) {
+      case 'tennis': return <Activity className="w-3.5 h-3.5 text-[#E8A5A5]" />;
+      case 'boxing': return <Zap className="w-3.5 h-3.5 text-[#E9D78E]" />;
+      case 'dance': return <Sparkles className="w-3.5 h-3.5 text-[#A4C2F4]" />;
+      case 'cooking': return <Utensils className="w-3.5 h-3.5 text-[#B5C99A]" />;
+      case 'guitar': return <Music className="w-3.5 h-3.5 text-[#E8A5A5]" />;
+      case 'yoga': return <Heart className="w-3.5 h-3.5 text-[#E8A5A5]" />;
+      case 'golf': return <Target className="w-3.5 h-3.5 text-[#B5C99A]" />;
+      default: return <Activity className="w-3.5 h-3.5 text-[#A4C2F4]" />;
+    }
+  };
+
   return (
-    <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 px-4 py-3">
-      <div className="max-w-5xl mx-auto flex items-center justify-between gap-2">
-        {/* App Title & Logo */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-400 flex items-center justify-center font-black text-slate-950 shadow-md shadow-emerald-950/50">
+    <header className="sticky top-0 z-40 bg-[#F7F3EE]/95 backdrop-blur-xl border-b border-[#E8E2D8] px-4 py-2.5">
+      <div className="max-w-5xl mx-auto flex items-center justify-between">
+        
+        {/* Brand */}
+        <button
+          onClick={onShowLanding}
+          className="flex items-center gap-2 group cursor-pointer text-left focus:outline-none"
+        >
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#E8A5A5] via-[#A4C2F4] to-[#E9D78E] flex items-center justify-center font-black text-[#3E4348] text-sm shadow-xs group-hover:scale-105 transition-transform">
             P
           </div>
-          <div>
+          <span className="font-black text-sm tracking-tight text-[#3E4348]">POCKET COACH</span>
+        </button>
+
+        {/* Skill Switcher Pill */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="bg-[#FAF9F6] hover:bg-white border border-[#E8E2D8] hover:border-[#A4C2F4] px-3.5 py-1.5 rounded-full flex items-center gap-2 transition cursor-pointer shadow-xs text-xs font-bold text-[#3E4348]"
+          >
             <div className="flex items-center gap-1.5">
-              <h1 className="text-base font-black tracking-tight text-white leading-none">POCKET COACH</h1>
-              <span className="text-[9px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.2 rounded font-mono uppercase">
-                AI LIVE
-              </span>
+              {getDisciplineIcon(activeDiscipline.id)}
+              <span>{activeDiscipline.shortName || activeDiscipline.name}</span>
             </div>
-            <p className="text-[10px] text-slate-400 font-medium">10k-Hour Private AI Mentor</p>
-          </div>
+            <ChevronDown className={`w-3.5 h-3.5 text-[#6E757C] transition-transform ${isDropdownOpen ? 'rotate-180 text-[#E8A5A5]' : ''}`} />
+          </button>
+
+          {isDropdownOpen && (
+            <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-56 bg-[#FAF9F6] border border-[#E8E2D8] rounded-2xl p-1.5 shadow-xl z-50 space-y-0.5 animate-fade-in">
+              {enrolledDisciplines.map((d) => {
+                const isActive = d.id === activeDiscipline.id;
+                return (
+                  <button
+                    key={d.id}
+                    onClick={() => {
+                      onSelectDiscipline(d);
+                      setIsDropdownOpen(false);
+                    }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-left transition cursor-pointer text-xs ${
+                      isActive
+                        ? 'bg-[#A4C2F4]/20 text-[#3E4348] font-bold'
+                        : 'hover:bg-white text-[#6E757C] hover:text-[#3E4348]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {getDisciplineIcon(d.id)}
+                      <span>{d.name}</span>
+                    </div>
+                    {isActive && <Check className="w-3.5 h-3.5 text-[#3E4348]" />}
+                  </button>
+                );
+              })}
+
+              <div className="pt-1 border-t border-[#E8E2D8]">
+                <button
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    onOpenAddSkill();
+                  }}
+                  className="w-full px-3 py-1.5 rounded-xl flex items-center gap-1.5 text-xs font-bold text-[#3E4348] hover:bg-[#E8A5A5]/20 transition cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 text-[#E8A5A5]" />
+                  <span>Learn Another Skill</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* API Key Input & AirPods Connection Badge */}
+        {/* Right Section: API Key & Athlete Profile */}
         <div className="flex items-center gap-2">
+          {/* Gemini API Key Button */}
           {showKeyInput ? (
-            <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-700">
+            <div className="flex items-center gap-1 bg-white p-1 rounded-2xl border border-[#E8E2D8] shadow-xs">
               <input
                 type="password"
                 value={apiKey}
                 onChange={(e) => handleSaveKey(e.target.value)}
-                placeholder="Paste Gemini API Key"
-                className="bg-transparent text-xs text-white px-2 py-1 focus:outline-none w-36 sm:w-48 font-mono"
+                placeholder="Paste Gemini Key"
+                className="bg-transparent text-xs text-[#3E4348] px-2 py-1 focus:outline-none w-32 sm:w-40 font-mono placeholder-[#6E757C]/60"
               />
               <button
                 onClick={() => setShowKeyInput(false)}
-                className="bg-emerald-500 text-slate-950 text-xs font-bold px-2 py-1 rounded-lg"
+                className="bg-[#A4C2F4] text-[#3E4348] text-xs font-bold px-2 py-1 rounded-xl cursor-pointer"
               >
                 {isSaved ? <Check className="w-3.5 h-3.5" /> : 'Done'}
               </button>
@@ -70,25 +178,55 @@ export function HeaderNav({ coachProfile, activeTab }: HeaderNavProps) {
           ) : (
             <button
               onClick={() => setShowKeyInput(true)}
-              className="bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 text-xs font-semibold px-2.5 py-1.5 rounded-full flex items-center gap-1.5 transition"
+              className="bg-[#FAF9F6] hover:bg-white border border-[#E8E2D8] text-[#6E757C] hover:text-[#3E4348] text-xs font-semibold px-2.5 py-1.5 rounded-full flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+              title="Configure Gemini API Key"
             >
-              <Key className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">{apiKey ? 'API Key Active' : 'Set Gemini Key'}</span>
+              <Key className="w-3.5 h-3.5 text-[#E9D78E]" />
+              <span className="hidden sm:inline">{apiKey ? 'API Key Active' : 'Gemini Key'}</span>
             </button>
           )}
 
-          <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-inner">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <Headphones className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="text-xs font-semibold text-slate-200 hidden sm:inline">AirPods Pro</span>
-            <span className="text-[10px] font-mono text-emerald-400 border-l border-slate-800 pl-1.5 flex items-center gap-1">
-              <Battery className="w-3 h-3 text-slate-400" /> {coachProfile.batteryLevel}%
-            </span>
+          {/* Athlete Profile Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="bg-[#FAF9F6] hover:bg-white border border-[#E8E2D8] hover:border-[#A4C2F4] pl-1.5 pr-2.5 py-1 rounded-full flex items-center gap-2 transition cursor-pointer shadow-xs"
+            >
+              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#A4C2F4] to-[#E8A5A5] text-[#3E4348] font-black text-xs flex items-center justify-center">
+                {initial}
+              </div>
+              <span className="text-xs font-bold text-[#3E4348] hidden sm:inline max-w-[100px] truncate">
+                {studentName}
+              </span>
+              <ChevronDown className="w-3 h-3 text-[#6E757C]" />
+            </button>
+
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#FAF9F6] border border-[#E8E2D8] rounded-2xl p-1.5 shadow-xl z-50 animate-fade-in space-y-0.5">
+                <div className="px-3 py-1.5 border-b border-[#E8E2D8]">
+                  <p className="text-xs font-bold text-[#3E4348] truncate">{studentName}</p>
+                  {user?.email && <p className="text-[10px] text-[#6E757C] font-mono truncate">{user.email}</p>}
+                </div>
+
+                <Link
+                  href="/sign-in"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#3E4348] hover:bg-white rounded-xl transition"
+                >
+                  <User className="w-3.5 h-3.5 text-[#A4C2F4]" /> Switch Profile
+                </Link>
+
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition text-left cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5" /> Sign Out
+                </button>
+              </div>
+            )}
           </div>
         </div>
+
       </div>
     </header>
   );
